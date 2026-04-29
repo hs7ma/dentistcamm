@@ -1,0 +1,44 @@
+# ── البيئة (تحوي مفاتيح حساسة) ───────────────
+.env
+.env.local
+*.env.local
+frontend/.env
+frontend/.env.local
+backend/.env
+backend/.env.local
+
+# ── Node ─────────────────────────────────────
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+# package-lock.json مطلوب لـ npm ci في Railway — لا تستثنه
+npm-debug.log*
+yarn-error.log*
+
+# ── Build output ─────────────────────────────
+frontend/dist/
+backend/static/
+
+# ── ESP32 / Arduino ──────────────────────────
+esp32/**/build/
+*.bin
+*.elf
+
+# ── Python (احتياطي) ─────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# ── IDE ──────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.code-workspace
+
+# ── OS ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

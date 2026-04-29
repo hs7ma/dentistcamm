@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DentistCam — تقرير شامل عن النظام</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.7;
+    padding: 40px 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #6d28d9, #4c1d95);
+    border-radius: 16px;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 40px rgba(109, 40, 217, 0.3);
+  }
+  header h1 {
+    font-size: 2.5em;
+    color: white;
+    margin-bottom: 10px;
+  }
+  header .subtitle { color: #ddd6fe; font-size: 1.1em; }
+  header .meta { color: #c4b5fd; font-size: 0.9em; margin-top: 12px; }
+
+  /* Sections */
+  section {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 24px;
+    border: 1px solid #334155;
+  }
+  h2 {
+    color: #a78bfa;
+    border-bottom: 2px solid #4c1d95;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 1.6em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2 .icon { font-size: 1.2em; }
+  h3 {
+    color: #c4b5fd;
+    margin: 24px 0 12px 0;
+    font-size: 1.2em;
+  }
+  p, li { margin-bottom: 8px; }
+  ul, ol { padding-right: 24px; margin-bottom: 12px; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    background: #0f172a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 12px 16px;
+    text-align: right;
+    border-bottom: 1px solid #334155;
+  }
+  th {
+    background: #4c1d95;
+    color: white;
+    font-weight: 600;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover { background: #1e293b; }
+
+  /* Code */
+  code, pre {
+    background: #0f172a;
+    color: #fbbf24;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    padding: 16px;
+    overflow-x: auto;
+    direction: ltr;
+    text-align: left;
+    margin: 12px 0;
+    color: #e2e8f0;
+  }
+  pre code { padding: 0; border: none; background: none; color: inherit; }
+
+  /* Boxes */
+  .box {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-right: 4px solid;
+  }
+  .box-info { background: #1e3a8a33; border-color: #3b82f6; }
+  .box-warning { background: #78350f33; border-color: #f59e0b; }
+  .box-success { background: #14532d33; border-color: #22c55e; }
+  .box-danger { background: #7f1d1d33; border-color: #ef4444; }
+
+  /* Architecture diagram */
+  .diagram {
+    background: #0f172a;
+    border: 2px dashed #6d28d9;
+    border-radius: 12px;
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+  }
+  .diagram pre {
+    background: none;
+    border: none;
+    color: #a78bfa;
+    font-size: 0.95em;
+    line-height: 1.4;
+  }
+
+  /* Stats grid */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .stat {
+    background: #0f172a;
+    border: 1px solid #4c1d95;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat .value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #a78bfa;
+    display: block;
+  }
+  .stat .label {
+    font-size: 0.85em;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+
+  /* Steps */
+  .steps {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+  }
+  .steps li {
+    counter-increment: step;
+    padding: 14px 16px 14px 60px;
+    margin-bottom: 12px;
+    background: #0f172a;
+    border-radius: 8px;
+    position: relative;
+    border-right: 3px solid #6d28d9;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background: #6d28d9;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    margin: 2px;
+    background: #4c1d95;
+    color: white;
+  }
+  .tag-success { background: #16a34a; }
+  .tag-warn { background: #d97706; }
+  .tag-info { background: #2563eb; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    color: #64748b;
+    margin-top: 40px;
+    padding: 20px;
+    border-top: 1px solid #334155;
+    font-size: 0.9em;
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; color: black; }
+    section, header { background: white; border: 1px solid #ccc; box-shadow: none; }
+    h2 { color: #4c1d95; }
+    pre, code { background: #f5f5f5; color: black; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ════ HEADER ════ -->
+<header>
+  <h1>🦷 DentistCam</h1>
+  <div class="subtitle">نظام تصوير الأسنان مع تحليل ذكي بالـ AI</div>
+  <div class="meta">تقرير فني شامل · 2026</div>
+</header>
+
+<!-- ════ نظرة عامة ════ -->
+<section>
+  <h2><span class="icon">📋</span> نظرة عامة</h2>
+  <p>
+    <strong>DentistCam</strong> نظام متكامل لتصوير الأسنان عن بُعد، يجمع بين كاميرا ESP32-CAM
+    وواجهة ويب حديثة وتحليل طبي آلي عبر الذكاء الاصطناعي. يهدف النظام لتقديم
+    تشخيص مساعد سريع للأطباء، الطلاب، والمرضى في المناطق النائية.
+  </p>
+
+  <div class="stats">
+    <div class="stat"><span class="value">3</span><span class="label">طبقات النظام</span></div>
+    <div class="stat"><span class="value">5</span><span class="label">ثوانٍ للإقلاع</span></div>
+    <div class="stat"><span class="value">VGA</span><span class="label">جودة البث (640×480)</span></div>
+    <div class="stat"><span class="value">~$0.0001</span><span class="label">تكلفة التحليل</span></div>
+  </div>
+</section>
+
+<!-- ════ المعمارية ════ -->
+<section>
+  <h2><span class="icon">🏗️</span> معمارية النظام</h2>
+
+  <div class="diagram">
+    <pre>
+    ┌─────────────────────────────────────────────────────┐
+    │           iPhone Personal Hotspot (4G)              │
+    │              SSID: iPhone | 172.20.10.0/28          │
+    └─────────────────┬───────────────────────────────────┘
+                      │
+        ┌─────────────┼─────────────────┐
+        │             │                 │
+   ┌────▼──────┐  ┌──▼─────────┐   ┌───▼──────────┐
+   │  iPhone   │  │  الحاسوب   │  │  ESP32-CAM    │
+   │ (Gateway) │  │ (الواجهة)  │◄─│ 172.20.10.10  │
+   │172.20.10.1│  │  React+Vite│   │  AI-Thinker   │
+   └─────┬─────┘  └─────┬──────┘   └──────────────┘
+         │              │
+         │     انترنت   │ HTTP fetch
+         └──────┬───────┘
+                ▼
+       ┌────────────────┐
+       │  OpenAI API    │
+       │  GPT-4o-mini   │
+       │  (Vision)      │
+       └────────────────┘
+    </pre>
+  </div>
+
+  <h3>الطبقات الثلاث</h3>
+  <table>
+    <tr><th>الطبقة</th><th>التقنية</th><th>الوظيفة</th></tr>
+    <tr>
+      <td><strong>الجهاز (Hardware)</strong></td>
+      <td>ESP32-CAM AI-Thinker</td>
+      <td>التقاط الصور وبثها MJPEG</td>
+    </tr>
+    <tr>
+      <td><strong>الواجهة (Frontend)</strong></td>
+      <td>React 18 + Vite + Tailwind</td>
+      <td>عرض البث، التقاط، إرسال للتحليل</td>
+    </tr>
+    <tr>
+      <td><strong>الذكاء (AI)</strong></td>
+      <td>OpenAI GPT-4o-mini Vision</td>
+      <td>تحليل طبي للصورة بالعربية</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ════ المكونات ════ -->
+<section>
+  <h2><span class="icon">⚙️</span> المكونات الفنية</h2>
+
+  <h3>1. ESP32-CAM (الفيرموير)</h3>
+  <ul>
+    <li><strong>اللوحة:</strong> AI-Thinker ESP32-CAM</li>
+    <li><strong>المكتبات:</strong> ESP32 core 3.x by Espressif (مدمجة)</li>
+    <li><strong>الكاميرا:</strong> OV2640 — جودة JPEG قابلة للضبط (4-40)</li>
+    <li><strong>IP ثابت:</strong> <code>172.20.10.10</code> يُضبط قبل WiFi.begin (بدون DHCP)</li>
+    <li><strong>الفلاش:</strong> LED على GPIO 4 — ضبط 0-255 عبر LEDC PWM</li>
+  </ul>
+
+  <h4>المنافذ المُتاحة</h4>
+  <table>
+    <tr><th>المسار</th><th>المنفذ</th><th>الوظيفة</th></tr>
+    <tr><td><code>/</code></td><td>80</td><td>JSON status (heap, RSSI, IP)</td></tr>
+    <tr><td><code>/capture</code></td><td>80</td><td>صورة JPEG واحدة عالية الجودة</td></tr>
+    <tr><td><code>/flash?v=N</code></td><td>80</td><td>ضبط الفلاش (0-255)</td></tr>
+    <tr><td><code>/quality?v=N</code></td><td>80</td><td>ضبط جودة JPEG (4-40)</td></tr>
+    <tr><td><code>/stream</code></td><td>81</td><td>MJPEG stream متعدد الإطارات</td></tr>
+  </table>
+
+  <h3>2. الواجهة (Frontend)</h3>
+  <ul>
+    <li><strong>الإطار:</strong> React 18.3 + Vite 5.3</li>
+    <li><strong>التصميم:</strong> Tailwind CSS 3.4 (Dark mode افتراضي)</li>
+    <li><strong>الاتجاه:</strong> RTL كامل (عربي)</li>
+    <li><strong>حجم البناء:</strong> 162 KB JS، 16 KB CSS (gzipped: 52 KB / 4 KB)</li>
+  </ul>
+
+  <h4>المكونات الرئيسية</h4>
+  <table>
+    <tr><th>الملف</th><th>الوظيفة</th></tr>
+    <tr><td><code>App.jsx</code></td><td>الواجهة الرئيسية + ربط الـ hooks</td></tr>
+    <tr><td><code>LiveStream.jsx</code></td><td>عرض MJPEG داخل &lt;img&gt;</td></tr>
+    <tr><td><code>ActionBar.jsx</code></td><td>أزرار: التقاط، تحليل، فلاش</td></tr>
+    <tr><td><code>AIReport.jsx</code></td><td>عرض تقرير GPT بتنسيق Markdown</td></tr>
+    <tr><td><code>SettingsModal.jsx</code></td><td>إدخال IP الكاميرا</td></tr>
+    <tr><td><code>ConnectionStatus.jsx</code></td><td>مؤشر FPS وحالة الاتصال</td></tr>
+  </table>
+
+  <h4>React Hooks المخصصة</h4>
+  <table>
+    <tr><th>الـ Hook</th><th>الوظيفة</th></tr>
+    <tr><td><code>useCameraStream</code></td><td>إدارة MJPEG، FPS، health check (polling 3s)</td></tr>
+    <tr><td><code>useAnalysis</code></td><td>إرسال الصورة لـ OpenAI ومعالجة الردود</td></tr>
+    <tr><td><code>useSettings</code></td><td>حفظ/استرجاع IP من localStorage</td></tr>
+  </table>
+
+  <h3>3. التحليل بالذكاء الاصطناعي</h3>
+  <ul>
+    <li><strong>الموديل:</strong> <code>gpt-4o-mini</code> (Vision)</li>
+    <li><strong>المزوّد:</strong> OpenAI API (استدعاء مباشر من المتصفح)</li>
+    <li><strong>تفاصيل الصورة:</strong> <code>detail: low</code> (تكلفة أقل، سرعة أعلى)</li>
+    <li><strong>السقف:</strong> 600 token كحد أقصى للرد</li>
+    <li><strong>اللغة:</strong> عربية كاملة (prompt + response)</li>
+  </ul>
+
+  <h4>هيكل الـ Prompt</h4>
+  <pre dir="rtl">
+أنت مساعد طبيب أسنان. حلّل هذه الصورة السنية بإيجاز:
+
+**الملاحظات:** (نخر، التهاب لثة، جير، تآكل، تلوّن — مع الموقع)
+**التوصية:** (إجراء مقترح لكل مشكلة)
+**الأولوية:** طبيعي / يحتاج متابعة / يحتاج علاج / يحتاج تدخل عاجل
+
+كن موجزاً. هذا تحليل مساعد وليس تشخيصاً نهائياً.
+  </pre>
+
+  <h4>مستويات الأولوية</h4>
+  <p>
+    <span class="tag" style="background:#16a34a">طبيعي</span>
+    <span class="tag" style="background:#eab308">يحتاج متابعة</span>
+    <span class="tag" style="background:#f97316">يحتاج علاج</span>
+    <span class="tag" style="background:#dc2626">يحتاج تدخل عاجل</span>
+  </p>
+</section>
+
+<!-- ════ تدفق العمل ════ -->
+<section>
+  <h2><span class="icon">🔄</span> تدفّق العمل (Workflow)</h2>
+
+  <h3>سيناريو التحليل الكامل</h3>
+  <ol class="steps">
+    <li>المستخدم يضغط زر <strong>"تحليل بالذكاء"</strong> على الواجهة</li>
+    <li>الواجهة ترسل <code>GET http://172.20.10.10/capture</code> لـ ESP32</li>
+    <li>ESP32 يلتقط Frame عالي الجودة من OV2640 ويرجعه كـ JPEG</li>
+    <li>المتصفح يحوّل الـ Blob إلى Base64 Data URL عبر FileReader</li>
+    <li>Data URL يُرسل لـ OpenAI: <code>POST /v1/chat/completions</code></li>
+    <li>GPT-4o-mini يحلّل الصورة ويرجع تقريراً بالعربية</li>
+    <li>الواجهة تعرض التقرير مع تمييز الأولوية بلون مناسب</li>
+  </ol>
+
+  <h3>تدفق الإقلاع</h3>
+  <ol class="steps">
+    <li>iPhone Hotspot يُفعّل (مع Maximize Compatibility)</li>
+    <li>الحاسوب يتصل بالـ Hotspot</li>
+    <li>ESP32 يُشغَّل → يضبط IP <code>172.20.10.10</code> قبل WiFi.begin</li>
+    <li>ESP32 يبدأ خوادم HTTP على المنفذين 80 و 81</li>
+    <li>المستخدم يفتح <code>run.bat</code> → الواجهة على <code>localhost:5173</code></li>
+    <li>الواجهة تجلب IP الكاميرا من <code>.env</code> أو <code>localStorage</code></li>
+    <li>health check polling يبدأ كل 3 ثوانٍ → يتحقق من اتصال ESP32</li>
+    <li>عند نجاح الاتصال — &lt;img&gt; يبدأ MJPEG stream تلقائياً</li>
+  </ol>
+</section>
+
+<!-- ════ الشبكة ════ -->
+<section>
+  <h2><span class="icon">📡</span> إعدادات الشبكة</h2>
+
+  <div class="box box-info">
+    <strong>iPhone Personal Hotspot — مواصفات /28:</strong>
+    <p>iPhone Hotspot يستخدم subnet مقيّد (14 عنوان فقط) — نختار <code>172.20.10.10</code> ثابتاً.</p>
+  </div>
+
+  <table>
+    <tr><th>المُعطى</th><th>القيمة</th></tr>
+    <tr><td>SSID</td><td>اسم iPhone (مثل "iPhone")</td></tr>
+    <tr><td>Subnet</td><td><code>172.20.10.0/28</code></td></tr>
+    <tr><td>Subnet Mask</td><td><code>255.255.255.240</code></td></tr>
+    <tr><td>Gateway (iPhone)</td><td><code>172.20.10.1</code></td></tr>
+    <tr><td>IP الكاميرا</td><td><code>172.20.10.10</code> (ثابت)</td></tr>
+    <tr><td>النطاق المسموح</td><td><code>172.20.10.2 — 172.20.10.14</code></td></tr>
+    <tr><td>DNS</td><td><code>8.8.8.8</code> (Google)</td></tr>
+    <tr><td>التردد</td><td>2.4 GHz (يتطلب Maximize Compatibility)</td></tr>
+  </table>
+
+  <div class="box box-warning">
+    <strong>⚠️ مهم:</strong> iPhone يُغلق Hotspot تلقائياً بعد ~90 ثانية إذا لم يتصل به جهاز.
+    اترك شاشة Hotspot مفتوحة على iPhone حتى يتصل ESP32.
+  </div>
+</section>
+
+<!-- ════ الأمان ════ -->
+<section>
+  <h2><span class="icon">🔒</span> الأمان والخصوصية</h2>
+
+  <h3>مفتاح OpenAI</h3>
+  <ul>
+    <li>محفوظ في <code>frontend/.env</code> ويُحقن وقت البناء عبر <code>import.meta.env</code></li>
+    <li>الملف مُتجاهَل من Git عبر <code>.gitignore</code></li>
+    <li>المفتاح يظهر في حزمة JS النهائية (Vite يبني client-side فقط)</li>
+  </ul>
+
+  <div class="box box-warning">
+    <strong>تنبيه:</strong> هذه الواجهة <em>client-side</em> — أي مستخدم يفتح DevTools يستطيع
+    رؤية المفتاح. النظام مصمّم للاستخدام الشخصي/التعليمي. للإنتاج العام يجب
+    إضافة backend proxy.
+  </div>
+
+  <h3>WiFi credentials</h3>
+  <ul>
+    <li>محفوظة مباشرة في أعلى ملف <code>esp32_dental_cam.ino</code></li>
+    <li>عدّل قيم <code>WIFI_SSID</code> و <code>WIFI_PASSWORD</code> قبل الرفع</li>
+  </ul>
+
+  <h3>البيانات المرسلة لـ OpenAI</h3>
+  <ul>
+    <li>الصورة فقط — لا معلومات شخصية</li>
+    <li>OpenAI لا تُخزّن صور API بشكل افتراضي</li>
+    <li>الاتصال HTTPS مُشفّر</li>
+  </ul>
+</section>
+
+<!-- ════ التنصيب ════ -->
+<section>
+  <h2><span class="icon">🚀</span> التنصيب والتشغيل</h2>
+
+  <h3>المتطلبات</h3>
+  <ul>
+    <li><strong>Node.js 18+</strong> — <span class="tag tag-info">ضروري للواجهة</span></li>
+    <li><strong>Arduino IDE 2.x</strong> — <span class="tag tag-info">لرفع كود ESP32 (مرة واحدة)</span></li>
+    <li><strong>iPhone</strong> + Personal Hotspot</li>
+    <li><strong>ESP32-CAM AI-Thinker</strong> + كابل FTDI</li>
+  </ul>
+
+  <h3>النقل لحاسوب آخر — 3 خطوات</h3>
+  <ol class="steps">
+    <li>انسخ مجلد <code>dentistCam</code> كاملاً (USB / Cloud / GitHub)</li>
+    <li>ثبّت Node.js من <code>nodejs.org</code> (إصدار LTS)</li>
+    <li>دبل-كليك على <code>run.bat</code> — تنصيب وتشغيل تلقائي</li>
+  </ol>
+
+  <h3>سكربتات التشغيل</h3>
+  <table>
+    <tr><th>الملف</th><th>الوظيفة</th><th>متى يُستخدم</th></tr>
+    <tr><td><code>run.bat</code></td><td>تشغيل (مع تنصيب تلقائي)</td><td>كل مرة</td></tr>
+    <tr><td><code>run.sh</code></td><td>نفسه للينكس/ماك</td><td>كل مرة</td></tr>
+    <tr><td><code>setup.bat</code></td><td>تنصيب فقط</td><td>مرة واحدة</td></tr>
+    <tr><td><code>setup.sh</code></td><td>نفسه للينكس/ماك</td><td>مرة واحدة</td></tr>
+  </table>
+</section>
+
+<!-- ════ هيكل الملفات ════ -->
+<section>
+  <h2><span class="icon">📁</span> هيكل المشروع</h2>
+  <pre>
+dentistCam/
+├── README.md              ← دليل المستخدم
+├── REPORT.html            ← هذا التقرير
+├── run.bat / run.sh       ← تشغيل سريع
+├── setup.bat / setup.sh   ← تنصيب أولي
+├── .gitignore
+│
+├── frontend/              ← React + Vite
+│   ├── .env               ← مفتاح OpenAI + IP
+│   ├── .env.example
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── index.html
+│   └── src/
+│       ├── App.jsx
+│       ├── main.jsx
+│       ├── index.css
+│       ├── components/
+│       │   ├── LiveStream.jsx
+│       │   ├── ActionBar.jsx
+│       │   ├── AIReport.jsx
+│       │   ├── ConnectionStatus.jsx
+│       │   └── SettingsModal.jsx
+│       └── hooks/
+│           ├── useCameraStream.js
+│           ├── useAnalysis.js
+│           └── useSettings.js
+│
+└── esp32/
+    └── esp32_dental_cam/
+        └── esp32_dental_cam.ino   ← الفيرموير (~440 سطر)
+  </pre>
+</section>
+
+<!-- ════ الأداء ════ -->
+<section>
+  <h2><span class="icon">⚡</span> الأداء</h2>
+
+  <table>
+    <tr><th>المعطى</th><th>القيمة</th></tr>
+    <tr><td>زمن إقلاع ESP32</td><td>~5 ثوانٍ (ثابت)</td></tr>
+    <tr><td>زمن npm install (نظيف)</td><td>~25 ثانية / 130 حزمة</td></tr>
+    <tr><td>زمن البناء (vite build)</td><td>~1.5 ثانية</td></tr>
+    <tr><td>FPS البث (VGA)</td><td>~10-15 fps</td></tr>
+    <tr><td>زمن الالتقاط</td><td>~200-400ms</td></tr>
+    <tr><td>زمن تحليل OpenAI</td><td>~3-6 ثوانٍ</td></tr>
+    <tr><td>حجم الصورة (VGA, JPEG)</td><td>~30-80 KB</td></tr>
+    <tr><td>حجم الواجهة (gzipped)</td><td>~57 KB إجمالاً</td></tr>
+  </table>
+</section>
+
+<!-- ════ التكلفة ════ -->
+<section>
+  <h2><span class="icon">💰</span> التكلفة التشغيلية</h2>
+
+  <table>
+    <tr><th>البند</th><th>التكلفة</th></tr>
+    <tr><td>ESP32-CAM (شراء واحد)</td><td>~5$ (لمرة واحدة)</td></tr>
+    <tr><td>OpenAI gpt-4o-mini (input)</td><td>$0.150 / 1M tokens</td></tr>
+    <tr><td>OpenAI gpt-4o-mini (output)</td><td>$0.600 / 1M tokens</td></tr>
+    <tr><td>صورة detail: low</td><td>~85 tokens فقط</td></tr>
+    <tr><td><strong>تحليل واحد كامل</strong></td><td><strong>~$0.0001 (0.01 سنت)</strong></td></tr>
+    <tr><td>1000 تحليل</td><td>~$0.10</td></tr>
+    <tr><td>10,000 تحليل</td><td>~$1.00</td></tr>
+  </table>
+</section>
+
+<!-- ════ نقاط القوة والقيود ════ -->
+<section>
+  <h2><span class="icon">⚖️</span> نقاط القوة والقيود</h2>
+
+  <h3>نقاط القوة</h3>
+  <div class="box box-success">
+    <ul>
+      <li><strong>سهولة النقل:</strong> ملف واحد <code>run.bat</code> ينصّب ويشغّل</li>
+      <li><strong>IP ثابت مضمون:</strong> لا حاجة لإعادة ضبط الواجهة كل مرة</li>
+      <li><strong>كلفة منخفضة:</strong> ~0.01 سنت لكل تحليل</li>
+      <li><strong>دعم عربي كامل:</strong> RTL، تقارير عربية، رسائل خطأ عربية</li>
+      <li><strong>لا backend:</strong> كل شيء client-side (لا server يحتاج صيانة)</li>
+      <li><strong>يعمل بدون شبكة منزلية:</strong> iPhone Hotspot كافٍ</li>
+    </ul>
+  </div>
+
+  <h3>القيود الحالية</h3>
+  <div class="box box-warning">
+    <ul>
+      <li><strong>مفتاح OpenAI مكشوف:</strong> client-side bundle — للاستخدام الشخصي فقط</li>
+      <li><strong>iPhone Hotspot فقط:</strong> الكود مخصص لـ subnet /28</li>
+      <li><strong>لا تخزين سحابي:</strong> الصور تُحفظ محلياً فقط</li>
+      <li><strong>لا قاعدة بيانات:</strong> التقارير لا تُحفظ بين الجلسات</li>
+      <li><strong>تحليل واحد في وقت واحد:</strong> لا queue للطلبات</li>
+      <li><strong>iPhone يُغلق Hotspot:</strong> بعد 90 ثانية بدون أجهزة متصلة</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ════ الإصلاحات ════ -->
+<section>
+  <h2><span class="icon">🔧</span> استكشاف الأخطاء</h2>
+
+  <table>
+    <tr><th>المشكلة</th><th>السبب المحتمل</th><th>الحل</th></tr>
+    <tr><td>الواجهة لا تعرض البث</td><td>الحاسوب ليس على Hotspot</td><td><code>ipconfig</code> → ابحث عن 172.20.10.x</td></tr>
+    <tr><td>ESP32 لا يتصل</td><td>Maximize Compatibility مطفأ</td><td>iPhone → Hotspot → فعّل الخيار</td></tr>
+    <tr><td>"مفتاح OpenAI غير صالح"</td><td>المفتاح خاطئ في .env</td><td>عدّل <code>frontend/.env</code></td></tr>
+    <tr><td>"تجاوزت الحد المسموح"</td><td>لا رصيد في OpenAI</td><td>اشحن الحساب</td></tr>
+    <tr><td>"تعذر الاتصال بـ OpenAI"</td><td>لا انترنت</td><td>تحقّق من Hotspot</td></tr>
+    <tr><td>npm install يفشل</td><td>تعارض إصدارات</td><td>احذف node_modules + package-lock</td></tr>
+    <tr><td>FPS منخفض</td><td>ضعف إشارة WiFi</td><td>قرّب ESP32 من iPhone</td></tr>
+  </table>
+</section>
+
+<!-- ════ التطوير المستقبلي ════ -->
+<section>
+  <h2><span class="icon">🔮</span> أفكار للتطوير</h2>
+  <ul>
+    <li>إضافة backend proxy لإخفاء مفتاح OpenAI</li>
+    <li>حفظ التقارير في IndexedDB / قاعدة بيانات</li>
+    <li>دعم تسجيل فيديو وحفظه</li>
+    <li>وضع <em>offline</em> مع موديل محلي (TensorFlow.js)</li>
+    <li>تطبيق جوال (React Native / PWA)</li>
+    <li>دعم شبكات WiFi أخرى (تكييف subnet ديناميكياً)</li>
+    <li>رسوم بيانية للأولويات عبر الزمن</li>
+    <li>مشاركة التقارير عبر QR code</li>
+    <li>ربط مع نظام إدارة عيادات</li>
+  </ul>
+</section>
+
+<!-- ════ المراجع ════ -->
+<section>
+  <h2><span class="icon">📚</span> المراجع والروابط</h2>
+  <ul>
+    <li>OpenAI API: <code>https://platform.openai.com/docs</code></li>
+    <li>ESP32 Camera: <code>https://github.com/espressif/esp32-camera</code></li>
+    <li>Vite: <code>https://vitejs.dev/</code></li>
+    <li>React: <code>https://react.dev/</code></li>
+    <li>Tailwind: <code>https://tailwindcss.com/</code></li>
+  </ul>
+</section>
+
+<footer>
+  <p>تقرير DentistCam — نظام تصوير وتشخيص الأسنان بالذكاء الاصطناعي</p>
+  <p style="margin-top: 8px;">Generated · 2026</p>
+</footer>
+
+</div>
+
+</body>
+</html>
