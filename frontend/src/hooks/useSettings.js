@@ -14,8 +14,13 @@ function load(key, fallback) {
 }
 
 function deriveWsUrl(httpUrl) {
+  if (!httpUrl || typeof window === 'undefined') return '';
   try {
-    const url = new URL(httpUrl);
+    let base = httpUrl.trim();
+    if (!base.startsWith('http://') && !base.startsWith('https://')) {
+      base = 'https://' + base;
+    }
+    const url = new URL(base);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     url.pathname = '/ws';
     url.searchParams.set('role', 'browser');
@@ -23,7 +28,7 @@ function deriveWsUrl(httpUrl) {
     console.log('[SETTINGS] deriveWsUrl:', httpUrl, '→', result);
     return result;
   } catch (e) {
-    console.error('[SETTINGS] deriveWsUrl error:', e);
+    console.error('[SETTINGS] deriveWsUrl error:', e, 'input:', httpUrl);
     return '';
   }
 }
