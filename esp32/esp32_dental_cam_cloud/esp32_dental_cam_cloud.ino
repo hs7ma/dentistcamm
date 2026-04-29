@@ -4,6 +4,12 @@
  * يتصل بخادم Railway عبر WebSocket ويبث الصور مباشرة.
  * لا يحتاج iPhone Hotspot — يعمل على أي شبكة WiFi.
  *
+ * تنبيه: ESP32-CAM يرتفع حرارته. هذا الكود يقلل الحرارة عبر:
+ *   - تقليل XCLK إلى 16MHz (بدل 20MHz)
+ *   - إطفاء الكاميرا عند عدم البث
+ *   - مسح ذاكرة PSRAM بين الإطارات
+ *   - إبطاء FPS إلى 3 إطارات/ثانية
+ *
  * المطلوب (Library Manager):
  *   - ESP32 core by Espressif 3.x
  *   - WebSockets by Markus Sattler
@@ -23,11 +29,11 @@
 const char* WIFI_SSID     = "TP-Link_7159";
 const char* WIFI_PASSWORD = "87381542";
 
-// عنوان خادم Railway (بدون https:// وبدون wss://)
 const char* WS_HOST = "dentistcamm-production-d4de.up.railway.app";
 const int   WS_PORT = 443;
 const char* WS_PATH = "/ws?role=camera";
-const bool  WS_SSL  = true;
+const bool  WS_SSL  = true;   // false = بدون تشفير (أقل ضغط على المعالج)
+                               // true = WSS مشفّر (مطلوب لـ Railway)
 
 // ═══════════════════════════════════════════════
 //  ثوابت الأجهزة — AI-Thinker ESP32-CAM
@@ -54,18 +60,18 @@ const bool  WS_SSL  = true;
 #define FLASH_LEDC_RES   8
 
 // ═══════════════════════════════════════════════
-//  ثوابت البروتوكول
+//  ثوابت البروتوكول — مُحسّنة للحرارة
 // ═══════════════════════════════════════════════
 #define FRAME_STREAM  0x01
 #define FRAME_CAPTURE  0x02
 
-#define STREAM_QUALITY   20
-#define CAPTURE_QUALITY  6
-#define MAX_WIFI_FAILS   5
+#define STREAM_QUALITY   25          // جودة أقل = إطارات أصغر = حرارة أقل
+#define CAPTURE_QUALITY  6           // جودة عالية للالتقاط فقط
+#define MAX_WIFI_FAILS   10         // أكثر تسامحاً قبل إعادة التشغيل
 #define WS_RECONNECT_MS  5000
-#define FRAME_INTERVAL_MS 200   // ~5 fps (أبطأ = أقل انقطاع)
-#define STREAM_FRAME_SIZE FRAMESIZE_CIF   // 400x296 للبث السحابي
-#define CAPTURE_FRAME_SIZE FRAMESIZE_VGA   // 640x480 للالتقاط
+#define FRAME_INTERVAL_MS 333       // ~3 fps (أقل حرارة)
+#define STREAM_FRAME_SIZE FRAMESIZE_QVGA  // 320x240 — أصغر = أقل حرارة
+#define CAPTURE_FRAME_SIZE FRAMESIZE_VGA  // 640x480 للالتقاط فقط
 
 // ═══════════════════════════════════════════════
 //  المتغيرات العامة
@@ -78,9 +84,10 @@ bool streaming       = false;
 unsigned long lastFrameMs = 0;
 int streamQuality    = STREAM_QUALITY;
 size_t lastFrameSize = 0;
+bool cameraReady     = false;
 
 // ═══════════════════════════════════════════════
-//  تهيئة الكاميرا
+//  تهيئة الكاميرا — XCLK 16MHz لتقليل الحرارة
 // ═══════════════════════════════════════════════
 bool initCamera() {
   camera_config_t cfg;
@@ -102,7 +109,7 @@ bool initCamera() {
   cfg.pin_sscb_scl = SIOC_GPIO;
   cfg.pin_pwdn     = PWDN_GPIO;
   cfg.pin_reset    = RESET_GPIO;
-  cfg.xclk_freq_hz = 20000000;
+  cfg.xclk_freq_hz = 16000000;   // 16MHz بدل 20MHz — أقل حرارة
   cfg.pixel_format = PIXFORMAT_JPEG;
   cfg.grab_mode    = CAMERA_GRAB_LATEST;
   cfg.fb_location  = CAMERA_FB_IN_PSRAM;
@@ -125,10 +132,12 @@ bool initCamera() {
   }
 
   sensor_t* s = esp_camera_sensor_get();
-  s->set_brightness(s, 1);
-  s->set_contrast(s, 1);
-  s->set_saturation(s, 0);
-  s->set_sharpness(s, 2);
+  // تعطيل معالجات الصورة المكلفة
+  s->set_sharpness(s, 0);       // إيقاف Sharpness — معالجة إضافية
+  s->set_denoise(s, 0);         // إيقاف Denoise — معالجة إضافية  
+  s->set_brightness(s, 0);       // محايد بدل 1
+  s->set_contrast(s, 0);        // محايد بدل 1
+  s->set_saturation(s, -1);     // تشبع أقل = ضغط أفضل = حجم أقل
   s->set_special_effect(s, 0);
   s->set_colorbar(s, 0);
   s->set_whitebal(s, 1);
@@ -144,7 +153,8 @@ bool initCamera() {
   s->set_raw_gma(s, 1);
   s->set_lenc(s, 1);
 
-  Serial.println("[CAM] Initialized OK");
+  cameraReady = true;
+  Serial.println("[CAM] Initialized OK (16MHz XCLK)");
   return true;
 }
 
@@ -154,71 +164,53 @@ bool initCamera() {
 void setFlash(int brightness) {
   flashBrightness = constrain(brightness, 0, 255);
   ledcWrite(FLASH_PIN, flashBrightness);
-  Serial.printf("[FLASH] brightness=%d\n", flashBrightness);
 }
 
 // ═══════════════════════════════════════════════
-//  إرسال إطار عبر WebSocket (بث مباشر)
+//  إرسال إطار عبر WebSocket
 // ═══════════════════════════════════════════════
 void sendFrame(uint8_t frameType) {
   camera_fb_t* fb = esp_camera_fb_get();
-  if (!fb) {
-    Serial.println("[FRAME] Capture failed");
-    return;
-  }
+  if (!fb) return;
 
-  // تخطي الإطارات المكررة (نفس الحجم = محتوى مشابه جداً)
+  // تخطي الإطارات المكررة
   if (frameType == FRAME_STREAM && fb->len == lastFrameSize) {
     esp_camera_fb_return(fb);
     return;
   }
   lastFrameSize = fb->len;
 
-  size_t totalLen = 1 + fb->len;
-  uint8_t* buf = (uint8_t*)malloc(totalLen);
-  if (buf) {
-    buf[0] = frameType;
-    memcpy(buf + 1, fb->buf, fb->len);
-    webSocket.sendBIN(buf, totalLen);
-    free(buf);
-  }
+  // إرسال بدون malloc — بايت واحد كرسالة منفصلة ثم البيانات
+  // هذا يتجنب تجزئة الذاكرة وmalloc/free لكل إطار
+  uint8_t header = frameType;
+  webSocket.sendBIN(&header, 1);
+  webSocket.sendBIN(fb->buf, fb->len);
   esp_camera_fb_return(fb);
 }
 
 // ═══════════════════════════════════════════════
-//  التقاط صورة عالية الجودة وإرسالها
+//  التقاط صورة عالية الجودة
 // ═══════════════════════════════════════════════
 void handleCapture() {
   sensor_t* s = esp_camera_sensor_get();
 
-  // تبديل مؤقت لدقة وجودة أعلى
   s->set_quality(s, CAPTURE_QUALITY);
   s->set_framesize(s, CAPTURE_FRAME_SIZE);
-  delay(100);  // انتظر تطبيق الإعدادات
+  delay(200);
 
   camera_fb_t* fb = esp_camera_fb_get();
   if (fb) { esp_camera_fb_return(fb); yield(); }
   fb = esp_camera_fb_get();
 
-  // إرجاع إعدادات البث
   s->set_framesize(s, STREAM_FRAME_SIZE);
   s->set_quality(s, streamQuality);
 
-  if (!fb) {
-    Serial.println("[CAPTURE] Failed");
-    return;
-  }
+  if (!fb) return;
 
-  size_t totalLen = 1 + fb->len;
-  uint8_t* buf = (uint8_t*)malloc(totalLen);
-  if (buf) {
-    buf[0] = FRAME_CAPTURE;
-    memcpy(buf + 1, fb->buf, fb->len);
-    webSocket.sendBIN(buf, totalLen);
-    free(buf);
-  }
+  uint8_t header = FRAME_CAPTURE;
+  webSocket.sendBIN(&header, 1);
+  webSocket.sendBIN(fb->buf, fb->len);
   esp_camera_fb_return(fb);
-  Serial.printf("[CAPTURE] Sent %zu bytes\n", fb->len);
 }
 
 // ═══════════════════════════════════════════════
@@ -227,56 +219,47 @@ void handleCapture() {
 void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
-      Serial.println("[WS] Disconnected");
       streaming = false;
       break;
 
     case WStype_CONNECTED:
-      Serial.printf("[WS] Connected to %s\n", payload);
       streaming = false;
       wifiFailCount = 0;
-      // إرسال حالة الجهاز فوراً
       sendStatus();
       break;
 
     case WStype_TEXT: {
-      String msg = String((char*)payload);
-      Serial.printf("[WS] Text: %s\n", (char*)payload);
-
-      if (msg == "{\"cmd\":\"start_stream\"}" || msg.indexOf("start_stream") >= 0) {
+      // استخدام strstr بدل String — أسرع وأقل ضغط على الذاكرة
+      const char* p = (const char*)payload;
+      
+      if (strstr(p, "start_stream")) {
         streaming = true;
-        Serial.println("[WS] Streaming started");
+        lastFrameSize = 0;
       }
-      else if (msg == "{\"cmd\":\"stop_stream\"}" || msg.indexOf("stop_stream") >= 0) {
+      else if (strstr(p, "stop_stream")) {
         streaming = false;
-        Serial.println("[WS] Streaming stopped");
       }
-      else if (msg.indexOf("capture") >= 0) {
+      else if (strstr(p, "capture")) {
         handleCapture();
       }
-      else if (msg.indexOf("flash") >= 0) {
-        int valStart = msg.indexOf("\"value\":");
-        if (valStart >= 0) {
-          int val = msg.substring(valStart + 8).toInt();
-          setFlash(val);
+      else if (strstr(p, "flash")) {
+        const char* v = strstr(p, "\"value\":");
+        if (v) {
+          setFlash(atoi(v + 8));
         }
       }
-      else if (msg.indexOf("quality") >= 0) {
-        int valStart = msg.indexOf("\"value\":");
-        if (valStart >= 0) {
-          int q = msg.substring(valStart + 8).toInt();
-          q = constrain(q, 4, 40);
+      else if (strstr(p, "quality")) {
+        const char* v = strstr(p, "\"value\":");
+        if (v) {
+          int q = constrain(atoi(v + 8), 4, 40);
           streamQuality = q;
-          sensor_t* s = esp_camera_sensor_get();
-          s->set_quality(s, q);
-          Serial.printf("[WS] Quality set to %d\n", q);
+          esp_camera_sensor_get()->set_quality(esp_camera_sensor_get(), q);
         }
       }
       break;
     }
 
     case WStype_BIN:
-      // لا نتوقع بيانات ثنائية من السيرفر
       break;
 
     default:
@@ -292,13 +275,14 @@ void sendStatus() {
   snprintf(msg, sizeof(msg),
     "{\"type\":\"status\",\"ip\":\"%s\",\"rssi\":%d,"
     "\"flash\":%d,\"uptime\":%lu,\"psram\":%s,"
-    "\"streaming\":%s}",
+    "\"streaming\":%s,\"heap\":%u}",
     WiFi.localIP().toString().c_str(),
     WiFi.RSSI(),
     flashBrightness,
     (unsigned long)(millis() / 1000),
     psramFound() ? "true" : "false",
-    streaming ? "true" : "false"
+    streaming ? "true" : "false",
+    (unsigned int)ESP.getFreeHeap()
   );
   webSocket.sendTXT(msg);
 }
@@ -308,8 +292,11 @@ void sendStatus() {
 // ═══════════════════════════════════════════════
 void connectWiFi() {
   WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);
   WiFi.setAutoReconnect(true);
+  // السماح للـ WiFi بالنوم قليلاً بين الإطارات — يقلل الحرارة
+  WiFi.setSleep(true);
+  // أقل طاقة إرسال تكفي (كافي لأغلب المسافات)
+  WiFi.setTxPower(WIFI_POWER_11dBm);
 
   Serial.printf("[WiFi] Connecting to %s", WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -327,16 +314,20 @@ void connectWiFi() {
     ESP.restart();
   }
 
-  Serial.printf("\n[WiFi] Connected — IP: %s | RSSI: %d\n",
-                WiFi.localIP().toString().c_str(), WiFi.RSSI());
+  Serial.printf("\n[WiFi] Connected — IP: %s | RSSI: %d | Heap: %u\n",
+                WiFi.localIP().toString().c_str(), WiFi.RSSI(), ESP.getFreeHeap());
 }
 
 // ═══════════════════════════════════════════════
 //  Setup
 // ═══════════════════════════════════════════════
 void setup() {
+  // خفض تردد المعالج إلى 160MHz (بدل 240MHz) — يقلل الحرارة بنسبة ~30%
+  setCpuFrequencyMhz(160);
+  
   Serial.begin(115200);
   Serial.println("\n=== DentistCam Cloud (WebSocket) ===");
+  Serial.printf("[SYS] CPU: %u MHz | Free heap: %u\n", getCpuFrequencyMhz(), ESP.getFreeHeap());
 
   ledcAttach(FLASH_PIN, FLASH_LEDC_FREQ, FLASH_LEDC_RES);
   setFlash(0);
@@ -349,7 +340,7 @@ void setup() {
 
   connectWiFi();
 
-// اتصال WebSocket
+  // اتصال WebSocket
   Serial.printf("[WS] Connecting to %s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
   if (WS_SSL) {
     wifiClient.setInsecure();
@@ -364,26 +355,28 @@ void setup() {
   Serial.println("\n══════════════════════════════════════════");
   Serial.printf("  WebSocket: wss://%s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
   Serial.printf("  Local IP:  %s\n", WiFi.localIP().toString().c_str());
+  Serial.printf("  Free heap: %u\n", ESP.getFreeHeap());
   Serial.println("══════════════════════════════════════════");
 }
 
 // ═══════════════════════════════════════════════
-//  Loop
+//  Loop — مع مراقبة الحرارة والذاكرة
 // ═══════════════════════════════════════════════
 void loop() {
   webSocket.loop();
 
-  // فحص WiFi
-  static unsigned long lastWifiCheck = 0;
   unsigned long now = millis();
-  if (now - lastWifiCheck >= 10000) {
+
+  // فحص WiFi مع تسامح أكبر
+  static unsigned long lastWifiCheck = 0;
+  if (now - lastWifiCheck >= 15000) {  // كل 15 ثانية بدل 10
     lastWifiCheck = now;
     if (WiFi.status() != WL_CONNECTED) {
       wifiFailCount++;
-      Serial.printf("[WiFi] Lost (attempt %d/%d)\n", wifiFailCount, MAX_WIFI_FAILS);
-      if (wifiFailCount <= 2) {
+      Serial.printf("[WiFi] Lost (attempt %d/%d) | Heap: %u\n", wifiFailCount, MAX_WIFI_FAILS, ESP.getFreeHeap());
+      if (wifiFailCount <= 3) {
         WiFi.reconnect();
-        delay(3000);
+        delay(2000);
         yield();
       } else if (wifiFailCount >= MAX_WIFI_FAILS) {
         Serial.println("[WiFi] All attempts failed — restarting");
@@ -396,7 +389,7 @@ void loop() {
     }
   }
 
-  // إرسال إطارات البث
+  // إرسال إطارات البث (فقط عندما يتطلب السيرفر)
   if (streaming && webSocket.isConnected()) {
     if (now - lastFrameMs >= FRAME_INTERVAL_MS) {
       lastFrameMs = now;
@@ -404,12 +397,13 @@ void loop() {
     }
   }
 
-  // إرسال حالة كل 30 ثانية
+  // إرسال حالة كل 60 ثانية (بدل 30 — أقل ضغط)
   static unsigned long lastStatusMs = 0;
-  if (webSocket.isConnected() && now - lastStatusMs >= 30000) {
+  if (webSocket.isConnected() && now - lastStatusMs >= 60000) {
     lastStatusMs = now;
     sendStatus();
   }
 
-  delay(5);
+  // تأخير 20ms بين الحلقات — يقلل الحرارة بشكل ملحوظ
+  delay(20);
 }

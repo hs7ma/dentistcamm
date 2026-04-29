@@ -22,8 +22,12 @@ const FRONTEND_DIR = path.resolve(__dirname, '..', 'frontend', 'dist');
 // ══════════════════════════════════════════════
 let cameraWs = null;
 const browserClients = new Set();
-const FRAME_STREAM = 0x01;
+const FRAME_STREAM  = 0x01;
 const FRAME_CAPTURE = 0x02;
+
+// Buffer for reassembling split binary frames from ESP32
+let pendingFrameType = null;
+let pendingFrameBuffer = null;
 
 // ══════════════════════════════════════════════
 //  Static frontend
@@ -131,8 +135,25 @@ wss.on('connection', (ws, req) => {
     notifyCameraStatus();
 
     ws.on('message', (data, isBinary) => {
-      if (isBinary && Buffer.isBuffer(data) && data.length > 1) {
-        broadcastToBrowsers(data, true);
+      if (isBinary && Buffer.isBuffer(data)) {
+        // ESP32 sends: 1-byte header first, then payload separately
+        // We need to reassemble into a single frame for browsers
+        if (data.length === 1) {
+          // Header byte
+          pendingFrameType = data[0];
+          pendingFrameBuffer = [];
+        } else if (data.length > 1 && pendingFrameType !== null) {
+          // Payload — combine with header and forward
+          const frame = Buffer.alloc(1 + data.length);
+          frame[0] = pendingFrameType;
+          data.copy(frame, 1);
+          broadcastToBrowsers(frame, true);
+          pendingFrameType = null;
+          pendingFrameBuffer = null;
+        } else if (data.length > 1) {
+          // Single combined frame (backward compatible)
+          broadcastToBrowsers(data, true);
+        }
       } else if (!isBinary) {
         try {
           const msg = JSON.parse(data.toString());
