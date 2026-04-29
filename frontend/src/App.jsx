@@ -41,12 +41,26 @@ export default function App() {
     }
   }, [captureSnapshot]);
 
+const handleUpload = useCallback(async (dataUrl) => {
+    setCaptureFlash(true);
+    setTimeout(() => setCaptureFlash(false), 200);
+    if (imgRef?.current) {
+      imgRef.current.src = dataUrl;
+      imgRef.current.style.display = "block";
+    }
+    try {
+      await analyze(dataUrl);
+    } catch (err) {
+      alert(`فشل التحليل: ${err.message}`);
+    }
+  }, [analyze, imgRef]);
+
   const handleAnalyze = useCallback(async () => {
     try {
       const dataUrl = await captureSnapshot();
       await analyze(dataUrl);
     } catch (err) {
-      alert(`\u0641\u0634\u0644 \u0627\u0644\u0627\u0644\u062a\u0642\u0627\u0637 \u0644\u0644\u062a\u062d\u0644\u064a\u0644: ${err.message}`);
+      alert(`فشل الالتقاط للتحليل: ${err.message}`);
     }
   }, [captureSnapshot, analyze]);
 
@@ -132,6 +146,7 @@ export default function App() {
             cameraOnline={cameraOnline}
             onCapture={handleCapture}
             onAnalyze={handleAnalyze}
+            onUpload={handleUpload}
             onFlash={setFlash}
             analyzing={analyzing}
           />

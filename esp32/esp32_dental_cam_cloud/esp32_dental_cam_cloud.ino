@@ -24,7 +24,7 @@ const char* WIFI_SSID     = "TP-Link_7159";
 const char* WIFI_PASSWORD = "87381542";
 
 // عنوان خادم Railway (بدون https:// وبدون wss://)
-const char* WS_HOST = "dentistcamm-production.up.railway.app";
+const char* WS_HOST = "dentistcamm-production-d4de.up.railway.app";
 const int   WS_PORT = 443;
 const char* WS_PATH = "/ws?role=camera";
 const bool  WS_SSL  = true;
@@ -336,13 +336,13 @@ void setup() {
   // اتصال WebSocket
   Serial.printf("[WS] Connecting to %s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
   if (WS_SSL) {
-    wifiClient.setInsecure();
-    webSocket.beginSSL(WS_HOST, WS_PORT, WS_PATH, "", "arduino");
+    webSocket.beginSSL(WS_HOST, WS_PORT, WS_PATH);
   } else {
-    webSocket.begin(WS_HOST, WS_PORT, WS_PATH, "arduino");
+    webSocket.begin(WS_HOST, WS_PORT, WS_PATH);
   }
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(WS_RECONNECT_MS);
+  webSocket.enableHeartbeat(15000, 3000, 2);
 
   Serial.println("\n══════════════════════════════════════════");
   Serial.printf("  WebSocket: wss://%s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);

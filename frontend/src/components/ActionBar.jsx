@@ -1,22 +1,35 @@
 /**
  * شريط التحكم
- * أزرار: التقاط صورة، تحليل AI، التحكم بالفلاش
+ * أزرار: التقاط صورة، رفع صورة، تحليل AI، التحكم بالفلاش
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function ActionBar({
   cameraOnline,
   onCapture,
   onAnalyze,
+  onUpload,
   onFlash,
   analyzing,
 }) {
-  const [flash, setFlash] = useState(0); // 0–255
+  const [flash, setFlash] = useState(0);
+  const fileRef = useRef(null);
 
   function handleFlashChange(e) {
     const val = Number(e.target.value);
     setFlash(val);
     onFlash(val);
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      onUpload(reader.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   }
 
   const btnBase =
@@ -35,6 +48,23 @@ export default function ActionBar({
         <CameraIcon />
         التقاط
       </button>
+
+      {/* رفع صورة */}
+      <button
+        onClick={() => fileRef.current?.click()}
+        className={`${btnBase} bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30`}
+        title="رفع صورة من الجهاز"
+      >
+        <UploadIcon />
+        رفع صورة
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       {/* تحليل AI */}
       <button
@@ -115,6 +145,16 @@ function SpinnerIcon() {
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
       />
     </svg>
   );
