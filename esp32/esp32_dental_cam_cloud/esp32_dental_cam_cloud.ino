@@ -24,7 +24,7 @@ const char* WIFI_SSID     = "TP-Link_7159";
 const char* WIFI_PASSWORD = "87381542";
 
 // عنوان خادم Railway (بدون https:// وبدون wss://)
-const char* WS_HOST = "dentistcamm-production.up.railway.app";
+const char* WS_HOST = "dentistcamm-production-d4de.up.railway.app";
 const int   WS_PORT = 443;
 const char* WS_PATH = "/ws?role=camera";
 const bool  WS_SSL  = true;
@@ -59,11 +59,13 @@ const bool  WS_SSL  = true;
 #define FRAME_STREAM  0x01
 #define FRAME_CAPTURE  0x02
 
-#define STREAM_QUALITY   15
+#define STREAM_QUALITY   20
 #define CAPTURE_QUALITY  6
 #define MAX_WIFI_FAILS   5
 #define WS_RECONNECT_MS  5000
-#define FRAME_INTERVAL_MS 66   // ~15 fps
+#define FRAME_INTERVAL_MS 200   // ~5 fps (أبطأ = أقل انقطاع)
+#define STREAM_FRAME_SIZE FRAMESIZE_CIF   // 400x296 للبث السحابي
+#define CAPTURE_FRAME_SIZE FRAMESIZE_VGA   // 640x480 للالتقاط
 
 // ═══════════════════════════════════════════════
 //  المتغيرات العامة
@@ -75,6 +77,7 @@ int wifiFailCount    = 0;
 bool streaming       = false;
 unsigned long lastFrameMs = 0;
 int streamQuality    = STREAM_QUALITY;
+size_t lastFrameSize = 0;
 
 // ═══════════════════════════════════════════════
 //  تهيئة الكاميرا
@@ -105,7 +108,7 @@ bool initCamera() {
   cfg.fb_location  = CAMERA_FB_IN_PSRAM;
 
   if (psramFound()) {
-    cfg.frame_size   = FRAMESIZE_VGA;
+    cfg.frame_size   = STREAM_FRAME_SIZE;
     cfg.jpeg_quality = streamQuality;
     cfg.fb_count     = 2;
   } else {
@@ -155,7 +158,7 @@ void setFlash(int brightness) {
 }
 
 // ═══════════════════════════════════════════════
-//  إرسال إطار عبر WebSocket
+//  إرسال إطار عبر WebSocket (بث مباشر)
 // ═══════════════════════════════════════════════
 void sendFrame(uint8_t frameType) {
   camera_fb_t* fb = esp_camera_fb_get();
@@ -163,6 +166,13 @@ void sendFrame(uint8_t frameType) {
     Serial.println("[FRAME] Capture failed");
     return;
   }
+
+  // تخطي الإطارات المكررة (نفس الحجم = محتوى مشابه جداً)
+  if (frameType == FRAME_STREAM && fb->len == lastFrameSize) {
+    esp_camera_fb_return(fb);
+    return;
+  }
+  lastFrameSize = fb->len;
 
   size_t totalLen = 1 + fb->len;
   uint8_t* buf = (uint8_t*)malloc(totalLen);
@@ -180,12 +190,18 @@ void sendFrame(uint8_t frameType) {
 // ═══════════════════════════════════════════════
 void handleCapture() {
   sensor_t* s = esp_camera_sensor_get();
+
+  // تبديل مؤقت لدقة وجودة أعلى
   s->set_quality(s, CAPTURE_QUALITY);
+  s->set_framesize(s, CAPTURE_FRAME_SIZE);
+  delay(100);  // انتظر تطبيق الإعدادات
 
   camera_fb_t* fb = esp_camera_fb_get();
   if (fb) { esp_camera_fb_return(fb); yield(); }
   fb = esp_camera_fb_get();
 
+  // إرجاع إعدادات البث
+  s->set_framesize(s, STREAM_FRAME_SIZE);
   s->set_quality(s, streamQuality);
 
   if (!fb) {
@@ -333,16 +349,17 @@ void setup() {
 
   connectWiFi();
 
-  // اتصال WebSocket
+// اتصال WebSocket
   Serial.printf("[WS] Connecting to %s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
   if (WS_SSL) {
     wifiClient.setInsecure();
-    webSocket.beginSSL(WS_HOST, WS_PORT, WS_PATH, "", "arduino");
+    webSocket.beginSSL(WS_HOST, WS_PORT, WS_PATH);
   } else {
-    webSocket.begin(WS_HOST, WS_PORT, WS_PATH, "arduino");
+    webSocket.begin(WS_HOST, WS_PORT, WS_PATH);
   }
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(WS_RECONNECT_MS);
+  webSocket.enableHeartbeat(15000, 3000, 2);
 
   Serial.println("\n══════════════════════════════════════════");
   Serial.printf("  WebSocket: wss://%s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
