@@ -75,8 +75,8 @@ export default function SettingsModal({ open, settings, onClose, onSaveIp, onSav
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()} dir="rtl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6 my-auto max-h-[95vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()} dir="rtl">
 
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">

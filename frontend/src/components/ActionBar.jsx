@@ -33,55 +33,55 @@ export default function ActionBar({
   }
 
   const btnBase =
-    "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed";
+    "flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed";
 
   return (
-    <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-800/60 rounded-xl border border-gray-700">
+    <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 sm:p-4 bg-gray-800/60 rounded-xl border border-gray-700">
 
-      {/* التقاط صورة */}
-      <button
-        onClick={onCapture}
-        disabled={!cameraOnline}
-        className={`${btnBase} bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-900/30`}
-        title="التقاط صورة عالية الجودة"
-      >
-        <CameraIcon />
-        التقاط
-      </button>
+      {/* صف الأزرار */}
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3 sm:flex-1">
+        {/* التقاط صورة */}
+        <button
+          onClick={onCapture}
+          disabled={!cameraOnline}
+          className={`${btnBase} bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-900/30`}
+          title="التقاط صورة عالية الجودة"
+        >
+          <CameraIcon />
+          <span>التقاط</span>
+        </button>
 
-      {/* رفع صورة */}
-      <button
-        onClick={() => fileRef.current?.click()}
-        className={`${btnBase} bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30`}
-        title="رفع صورة من الجهاز"
-      >
-        <UploadIcon />
-        رفع صورة
-      </button>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileChange}
-      />
+        {/* رفع صورة */}
+        <button
+          onClick={() => fileRef.current?.click()}
+          className={`${btnBase} bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30`}
+          title="رفع صورة من الجهاز"
+        >
+          <UploadIcon />
+          <span>رفع صورة</span>
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
 
-      {/* تحليل AI */}
-      <button
-        onClick={onAnalyze}
-        disabled={analyzing}
-        className={`${btnBase} bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/30`}
-        title="إرسال الصورة الحالية لتحليل GPT-4o"
-      >
-        {analyzing ? <SpinnerIcon /> : <BrainIcon />}
-        {analyzing ? "جارٍ التحليل..." : "تحليل AI"}
-      </button>
-
-      {/* مساحة */}
-      <div className="flex-1" />
+        {/* تحليل AI */}
+        <button
+          onClick={onAnalyze}
+          disabled={analyzing}
+          className={`${btnBase} bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/30`}
+          title="إرسال الصورة الحالية لتحليل GPT-4o"
+        >
+          {analyzing ? <SpinnerIcon /> : <BrainIcon />}
+          <span className="truncate">{analyzing ? "جارٍ التحليل..." : "تحليل AI"}</span>
+        </button>
+      </div>
 
       {/* التحكم بالفلاش */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-700/60">
         <FlashIcon dim={flash === 0} />
         <input
           type="range"
@@ -91,10 +91,10 @@ export default function ActionBar({
           value={flash}
           onChange={handleFlashChange}
           disabled={!cameraOnline}
-          className="w-28 accent-yellow-400 disabled:opacity-40 cursor-pointer"
+          className="flex-1 sm:flex-none sm:w-28 accent-yellow-400 disabled:opacity-40 cursor-pointer"
           title={`الفلاش: ${Math.round((flash / 255) * 100)}%`}
         />
-        <span className="text-xs text-gray-400 w-8 text-left">
+        <span className="text-xs text-gray-400 w-8 text-left shrink-0">
           {Math.round((flash / 255) * 100)}%
         </span>
       </div>

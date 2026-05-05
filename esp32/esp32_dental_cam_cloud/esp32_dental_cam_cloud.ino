@@ -26,8 +26,8 @@
 // ═══════════════════════════════════════════════
 //  إعدادات — غيّر هذه القيم فقط
 // ═══════════════════════════════════════════════
-const char* WIFI_SSID     = "TP-Link_7159";
-const char* WIFI_PASSWORD = "87381542";
+const char* WIFI_SSID     = "MSR3";
+const char* WIFI_PASSWORD = "60006000";
 
 const char* WS_HOST = "dentistcamm-production-d4de.up.railway.app";
 const int   WS_PORT = 443;

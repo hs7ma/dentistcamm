@@ -77,7 +77,7 @@ export default function AIReport({ report, loading, error }) {
       </div>
 
       {/* نص التقرير بتنسيق Markdown بسيط */}
-      <div className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap no-scrollbar overflow-y-auto max-h-80 pr-1">
+      <div className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap no-scrollbar overflow-y-auto pr-1">
         <MarkdownLite text={report.analysis} />
       </div>
 

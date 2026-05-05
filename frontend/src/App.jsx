@@ -71,12 +71,12 @@ const handleUpload = useCallback(async (dataUrl) => {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col" dir="rtl">
 
       {/* ── Header ───────────────────────────── */}
-      <header className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🦷</span>
-          <div>
-            <h1 className="text-base font-bold text-white leading-none">DentistCam</h1>
-            <p className="text-xs text-gray-500 mt-0.5">
+      <header className="border-b border-gray-800 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <span className="text-xl sm:text-2xl shrink-0">🦷</span>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-sm sm:text-base font-bold text-white leading-none">DentistCam</h1>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 truncate">
               {isCloud
                 ? <>متصل سحابياً عبر <span className="font-mono text-gray-400">{settings.serverUrl || window.location.host}</span></>
                 : settings.cameraIp
@@ -84,13 +84,15 @@ const handleUpload = useCallback(async (dataUrl) => {
                   : "نظام تصوير الأسنان المباشر"}
             </p>
           </div>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${isCloud ? 'bg-violet-600/30 text-violet-300' : 'bg-cyan-600/30 text-cyan-300'}`}>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${isCloud ? 'bg-violet-600/30 text-violet-300' : 'bg-cyan-600/30 text-cyan-300'}`}>
             {isCloud ? 'سحابي' : 'محلي'}
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <ConnectionStatus wsStatus={wsStatus} cameraOnline={cameraOnline} fps={fps} mode={settings.mode} />
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="hidden sm:block">
+            <ConnectionStatus wsStatus={wsStatus} cameraOnline={cameraOnline} fps={fps} mode={settings.mode} />
+          </div>
           <button
             onClick={() => setSettingsOpen(true)}
             className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition"
@@ -108,9 +110,14 @@ const handleUpload = useCallback(async (dataUrl) => {
         </div>
       </header>
 
+      {/* ── شريط حالة الاتصال للموبايل ───────── */}
+      <div className="sm:hidden border-b border-gray-800 px-3 py-2 bg-gray-900/40">
+        <ConnectionStatus wsStatus={wsStatus} cameraOnline={cameraOnline} fps={fps} mode={settings.mode} />
+      </div>
+
       {/* ── تنبيه ──────────────────────────── */}
       {needsConfig && (
-        <div className="bg-amber-900/30 border-b border-amber-800 text-amber-300 text-sm px-6 py-2.5 text-center">
+        <div className="bg-amber-900/30 border-b border-amber-800 text-amber-300 text-xs sm:text-sm px-3 sm:px-6 py-2 sm:py-2.5 text-center">
           لم يتم ضبط عنوان IP للكاميرا.{" "}
           <button onClick={() => setSettingsOpen(true)} className="underline hover:text-amber-200 font-medium">
             فتح الإعدادات
@@ -119,7 +126,7 @@ const handleUpload = useCallback(async (dataUrl) => {
       )}
 
       {isCloud && !settings.serverUrl && (
-        <div className="bg-amber-900/30 border-b border-amber-800 text-amber-300 text-sm px-6 py-2.5 text-center">
+        <div className="bg-amber-900/30 border-b border-amber-800 text-amber-300 text-xs sm:text-sm px-3 sm:px-6 py-2 sm:py-2.5 text-center">
           لم يتم ضبط عنوان السيرفر.{" "}
           <button onClick={() => setSettingsOpen(true)} className="underline hover:text-amber-200 font-medium">
             فتح الإعدادات
@@ -128,14 +135,14 @@ const handleUpload = useCallback(async (dataUrl) => {
       )}
 
       {settings.cameraIp && !cameraOnline && lastError && settings.mode === 'local' && (
-        <div className="bg-red-900/30 border-b border-red-800 text-red-300 text-xs px-6 py-2 text-center">
+        <div className="bg-red-900/30 border-b border-red-800 text-red-300 text-[11px] sm:text-xs px-3 sm:px-6 py-2 text-center">
           {lastError} — تأكد من تشغيل ESP32 واتصاله بنفس الشبكة
         </div>
       )}
 
       {/* ── Main Layout ─────────────────────── */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 lg:p-6">
-        <div className="lg:col-span-2 flex flex-col gap-4">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 lg:p-6">
+        <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-4">
           <div className="relative">
             <LiveStream imgRef={imgRef} cameraOnline={cameraOnline} />
             {captureFlash && (
@@ -152,9 +159,9 @@ const handleUpload = useCallback(async (dataUrl) => {
           />
         </div>
 
-        <div className="flex flex-col">
-          <div className="flex-1 bg-gray-900 rounded-xl border border-gray-700 p-4 overflow-hidden flex flex-col">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-700">
+        <div className="flex flex-col min-h-[300px] lg:min-h-0">
+          <div className="flex-1 bg-gray-900 rounded-xl border border-gray-700 p-3 sm:p-4 overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-700">
               <span className="w-2 h-2 rounded-full bg-violet-500" />
               <h2 className="text-sm font-semibold text-gray-200">تقرير التحليل الطبي</h2>
             </div>
