@@ -258,30 +258,16 @@ export function useCameraStream(imgRef, settings) {
 
   const captureSnapshot = useCallback(async () => {
     if (mode === 'cloud') {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        throw new Error('WebSocket غير متصل');
+      const img = imgRef?.current;
+      if (!img || !img.src || !img.naturalWidth) {
+        throw new Error('لا يوجد بث مباشر — انتظر ظهور الصورة');
       }
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          if (captureResolve.current) {
-            captureResolve.current = null;
-            reject(new Error('انتهت مهلة الالتقاط'));
-          }
-        }, CAPTURE_TIMEOUT_MS);
-
-        captureResolve.current = {
-          resolve: (dataUrl) => {
-            clearTimeout(timeout);
-            resolve(dataUrl);
-          },
-          reject: (err) => {
-            clearTimeout(timeout);
-            reject(err);
-          },
-        };
-
-        wsRef.current.send(JSON.stringify({ cmd: 'capture' }));
-      });
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.92);
     } else {
       const base = baseUrl(cameraIp);
       if (!base) throw new Error('لم يتم ضبط IP الكاميرا');

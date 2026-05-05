@@ -65,11 +65,11 @@ const bool  WS_SSL  = true;   // false = بدون تشفير (أقل ضغط عل
 #define FRAME_STREAM  0x01
 #define FRAME_CAPTURE  0x02
 
-#define STREAM_QUALITY   25          // جودة أقل = إطارات أصغر = حرارة أقل
+#define STREAM_QUALITY   18          // جودة متوسطة (أقل رقم = أفضل صورة)
 #define CAPTURE_QUALITY  6           // جودة عالية للالتقاط فقط
 #define MAX_WIFI_FAILS   10         // أكثر تسامحاً قبل إعادة التشغيل
 #define WS_RECONNECT_MS  5000
-#define FRAME_INTERVAL_MS 333       // ~3 fps (أقل حرارة)
+#define FRAME_INTERVAL_MS 140       // ~7 fps — توازن بين السلاسة والحرارة
 #define STREAM_FRAME_SIZE FRAMESIZE_QVGA  // 320x240 — أصغر = أقل حرارة
 #define CAPTURE_FRAME_SIZE FRAMESIZE_VGA  // 640x480 للالتقاط فقط
 
@@ -137,7 +137,7 @@ bool initCamera() {
   s->set_denoise(s, 0);         // إيقاف Denoise — معالجة إضافية  
   s->set_brightness(s, 0);       // محايد بدل 1
   s->set_contrast(s, 0);        // محايد بدل 1
-  s->set_saturation(s, -1);     // تشبع أقل = ضغط أفضل = حجم أقل
+  s->set_saturation(s, 0);      // ألوان طبيعية
   s->set_special_effect(s, 0);
   s->set_colorbar(s, 0);
   s->set_whitebal(s, 1);
@@ -322,8 +322,8 @@ void connectWiFi() {
 //  Setup
 // ═══════════════════════════════════════════════
 void setup() {
-  // خفض تردد المعالج إلى 160MHz (بدل 240MHz) — يقلل الحرارة بنسبة ~30%
-  setCpuFrequencyMhz(160);
+  // CPU 240MHz لمعالجة JPEG أسرع وسلاسة بث أفضل
+  setCpuFrequencyMhz(240);
   
   Serial.begin(115200);
   Serial.println("\n=== DentistCam Cloud (WebSocket) ===");
