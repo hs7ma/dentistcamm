@@ -1,108 +1,172 @@
-## ESP32 Environment Controller
+# DentistCam — نظام تصوير الأسنان مع تحليل ذكي
 
-This project provides a Node.js dashboard and firmware for an ESP32 board that reads temperature/humidity from a DHT22 sensor and controls four relays (fan, slide-door motor, water pump, heater). Relays can be managed automatically using configurable thresholds or overridden manually from the web interface.
+نظام يلتقط بثاً مباشراً من ESP32-CAM ويحلّله طبياً عبر OpenAI Vision (GPT-4o-mini).
 
----
-
-### Project Structure
-
-- `server.js` – Express backend that stores the most recent DHT22 readings, computes automatic relay states, and exposes REST endpoints for the ESP32 and web UI.
-- `public/index.html` – Single-page dashboard that displays live telemetry, relay states, and allows manual overrides or threshold updates.
-- `firmware/esp32_dht22_relay_controller.ino` – ESP32 (Arduino) sketch that reads the sensor, posts data to the backend, and applies relay commands.
+> **يعمل عبر iPhone Personal Hotspot فقط.**
 
 ---
 
-### Requirements
+## النقل لحاسوب آخر — 3 خطوات
 
-- Node.js 18+ (LTS recommended)
-- npm (bundled with Node.js)
-- ESP32 board (e.g., ESP32 DevKit V1) with the Arduino IDE or PlatformIO toolchain
-- DHT22 (AM2302) sensor
-- 4-channel relay module compatible with 3.3V logic
+### الخطوة 1: انسخ المجلد كاملاً
+انسخ مجلد `dentistCam` إلى الحاسوب الجديد (USB / OneDrive / GitHub...).
+
+> ✅ المفتاح موجود مسبقاً في `frontend/.env` — لا يحتاج إعدادات إضافية.
+
+### الخطوة 2: ثبّت Node.js
+حمّل من [nodejs.org](https://nodejs.org/) (الإصدار 18 أو أحدث).
+بعد التنصيب أعد تشغيل الحاسوب أو افتح PowerShell جديد.
+
+### الخطوة 3: شغّل التطبيق
+
+#### الويندوز
+دبل-كليك على [run.bat](run.bat) — سيقوم تلقائياً بـ:
+- تنصيب الحزم (~25 ثانية في أول مرة)
+- إنشاء `.env` إذا لم يوجد
+- تشغيل الواجهة
+
+#### لينكس / macOS
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+ستفتح الواجهة على: **http://localhost:5173**
 
 ---
 
-### Backend Setup (Node.js)
+## ESP32-CAM (مرة واحدة فقط)
 
-1. Install dependencies:
+ESP32 لا يحتاج إعادة برمجة عند نقل الواجهة لحاسوب آخر — الكود محفوظ على الشريحة.
+
+إذا أردت رفع الكود لأول مرة:
+
+1. افتح Arduino IDE → ثبّت **ESP32 core by Espressif** (3.x)
+2. افتح [esp32/esp32_dental_cam/esp32_dental_cam.ino](esp32/esp32_dental_cam/esp32_dental_cam.ino)
+3. عدّل بيانات WiFi في أعلى الملف `.ino`:
+   ```cpp
+   const char* WIFI_SSID     = "iPhone";
+   const char* WIFI_PASSWORD = "كلمة_السر";
    ```
-   npm install
-   ```
-2. Create a `.env` file (optional) to override defaults:
-   ```
-   PORT=3000
-   CORS_ORIGIN=http://localhost:3000
-   FAN_ON_TEMP=30
-   FAN_OFF_TEMP=28
-   HEATER_ON_TEMP=20
-   HEATER_OFF_TEMP=22
-   PUMP_ON_HUMIDITY=40
-   PUMP_OFF_HUMIDITY=55
-   MOTOR_OPEN_TEMP=32
-   MOTOR_CLOSE_TEMP=30
-   ```
-3. Start the server:
-   ```
-   npm start
-   ```
-4. Open `http://localhost:3000` in a browser. When the ESP32 is online, the dashboard will show live readings and relay statuses.
+4. اللوحة: **AI Thinker ESP32-CAM** → Upload (مع GPIO0 → GND)
+5. افصل GPIO0 → اضغط RESET → افتح Serial Monitor (115200)
+
+ستظهر دائماً نفس الرسالة (IP ثابت):
+```
+[WiFi] Connected — IP: 172.20.10.10 | GW: 172.20.10.1
+  Stream:  http://172.20.10.10:81/stream
+  Capture: http://172.20.10.10/capture
+```
 
 ---
 
-### REST API Overview
+## ترتيب التشغيل اليومي
 
-- `POST /api/sensor` – ESP32 posts readings: `{ "temperature": 24.8, "humidity": 61.2, "deviceId": "my-esp32" }`
-- `GET /api/relays` – ESP32 polls for relay commands; response includes `state` and `mode` per relay.
-- `GET /api/status` – UI polling endpoint returning sensor snapshot, relay states, and thresholds.
-- `POST /api/relays/:relayId` – UI override. Send `{ "mode": "manual", "state": true }` to force ON, or `{ "mode": "auto" }` to return to automatic control.
-- `PUT /api/thresholds` – UI updates automation thresholds. Payload example:
-  ```
-  {
-    "fan": { "on": 30, "off": 28, "comparison": "above" },
-    "heater": { "on": 20, "off": 22, "comparison": "below" }
-  }
-  ```
+```
+1. iPhone: شغّل Personal Hotspot
+   (تأكد من Maximize Compatibility = ON)
 
----
+2. الحاسوب: اتصل بـ Hotspot
 
-### ESP32 Firmware
+3. ESP32: وصّل الكهرباء (سيتصل تلقائياً بـ 172.20.10.10)
 
-1. Open `firmware/esp32_dht22_relay_controller.ino` in the Arduino IDE (or copy into PlatformIO).
-2. Install the required libraries via the Arduino Library Manager:
-   - `DHT sensor library` (by Adafruit)
-   - `Adafruit Unified Sensor`
-   - `ArduinoJson`
-3. Update the configuration block near the top:
-   - `WIFI_SSID` and `WIFI_PASSWORD`
-   - `API_BASE_URL` (e.g., `http://192.168.1.50:3000`)
-   - `DEVICE_ID`
-   - GPIO pins for the DHT22 data line and each relay
-   - Set `RELAY_ACTIVE_HIGH` to match your relay board (most modules are active-low, which is the default)
-4. Flash the firmware to your ESP32.
-5. Monitor the Serial Console (115200 baud) to confirm Wi-Fi connection, sensor readings, and relay updates.
+4. الحاسوب: دبل-كليك على run.bat
+   → افتح http://localhost:5173
+
+5. الواجهة: ستجد IP الكاميرا 172.20.10.10 محفوظ مسبقاً ✓
+```
 
 ---
 
-### Hardware Notes
+## كيف يعمل التحليل بالذكاء الاصطناعي
 
-- Power the DHT22 with 3.3V and use a 10K pull-up resistor between `VCC` and `DATA`.
-- Use a dedicated 5V supply for the relay module if it draws significant current. Connect grounds between the ESP32 and relay board.
-- Assign ESP32 GPIOs that support digital output (avoid strapping pins such as GPIO0, GPIO2, GPIO15 unless you understand the boot implications).
+```
+الكاميرا (ESP32) → الواجهة → OpenAI API (gpt-4o-mini Vision)
+   محلي               محلي        انترنت (4G من iPhone)
+```
+
+اضغط زر **"تحليل بالذكاء"** على الواجهة:
+- تُلتقط صورة من ESP32 (`/capture`)
+- تُحوّل إلى base64
+- تُرسل لـ OpenAI Vision مع تعليمات طبية بالعربية
+- يظهر التقرير (نخر، التهاب، توصيات، أولوية)
+
+**المتطلبات:**
+- ✅ مفتاح OpenAI صالح (موجود في `frontend/.env`)
+- ✅ رصيد في حساب OpenAI ([تحقّق هنا](https://platform.openai.com/usage))
+- ✅ اتصال انترنت (4G من iPhone أو شبكة أخرى)
 
 ---
 
-### Testing Tips
+## استكشاف الأخطاء
 
-- Use the dashboard to toggle relays manually and verify that the ESP32 updates outputs immediately.
-- Temporarily adjust thresholds to force automatic activation (e.g., lower the heater OFF threshold to observe state changes).
-- Check the backend console logs for HTTP errors or invalid payloads.
-- If running the server and ESP32 on different networks, configure port forwarding or VPN so the ESP32 can reach the API.
+### الواجهة لا تتصل بالكاميرا
+| السبب | الحل |
+|---|---|
+| الحاسوب ليس على Hotspot | افتح cmd → `ipconfig` → ابحث عن `172.20.10.x` |
+| iPhone أغلق Hotspot | افتح iPhone → اعرض شاشة Hotspot |
+| ESP32 لم يتصل | افحص Serial Monitor، تأكد من Maximize Compatibility |
+| IP مختلف في الإعدادات | اضغط ⚙️ → غيّر إلى `172.20.10.10` |
+
+### فشل التحليل بالذكاء
+الواجهة تعرض رسائل واضحة تلقائياً:
+
+| الرسالة | المعنى |
+|---|---|
+| "تعذر الاتصال بـ OpenAI" | لا انترنت — تحقّق من Hotspot |
+| "مفتاح OpenAI غير صالح" | المفتاح خاطئ في `frontend/.env` |
+| "تجاوزت الحد المسموح أو لا يوجد رصيد" | اشحن حسابك على OpenAI |
+| "الصورة غير صالحة" | التقط صورة أخرى |
+
+### npm install يفشل
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### اختبار سريع لمفتاح OpenAI من PowerShell
+```powershell
+curl https://api.openai.com/v1/models -H "Authorization: Bearer YOUR_KEY"
+```
+إذا رأيت قائمة موديلات → المفتاح يعمل.
 
 ---
 
-### Next Steps
+## هيكل المشروع
 
-- Secure the endpoints (API keys, token auth) before exposing them to untrusted networks.
-- Persist historical readings and relay logs using a database (e.g., SQLite, InfluxDB).
-- Add email/SMS alerts when sensor readings exceed safe limits.
+```
+dentistCam/
+├── README.md                  ← هذا الملف
+├── run.bat                    ← تشغيل سريع (Windows)
+├── run.sh                     ← تشغيل سريع (Linux/macOS)
+├── setup.bat / setup.sh       ← تنصيب أولي (اختياري)
+├── .gitignore
+│
+├── frontend/                  ← React + Vite + Tailwind
+│   ├── .env                   ← مفتاح OpenAI + IP الكاميرا
+│   ├── .env.example
+│   ├── package.json
+│   └── src/
+│       ├── App.jsx
+│       ├── components/        ← LiveStream, AIReport, ...
+│       └── hooks/             ← useCameraStream, useAnalysis, ...
+│
+└── esp32/
+    └── esp32_dental_cam/
+        └── esp32_dental_cam.ino   ← الفيرموير (بيانات WiFi في الأعلى)
+```
 
+---
+
+## نقاط فنية
+
+| المكوّن | التفاصيل |
+|---|---|
+| IP ESP32 | `172.20.10.10` ثابت (يُضبط قبل WiFi.begin، لا DHCP) |
+| Gateway | `172.20.10.1` |
+| Subnet | `255.255.255.240` (/28 — iPhone Hotspot) |
+| البث | MJPEG على `/stream` (منفذ 81) |
+| الالتقاط | JPEG على `/capture` (منفذ 80) |
+| التحليل | OpenAI `gpt-4o-mini` + `detail: low` |
+| التكلفة التقريبية | ~$0.0001 لكل صورة |
