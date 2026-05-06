@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة الإدارة - إيكو كونترول</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Cairo', 'sans-serif'] },
+            colors: {
+              primary: '#059669',
+              secondary: '#475569',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .glass {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      .modal-overlay {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+      }
+      .credential-box {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 2px dashed #22c55e;
+      }
+      .table-row:hover {
+        background-color: #f8fafc;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .modal-content {
+        animation: slideIn 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-800 font-sans">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-leaf text-xl"></i>
+            </div>
+            <span class="font-bold text-2xl tracking-tight text-emerald-900">إيكو كونترول</span>
+          </div>
+          <div class="hidden md:flex items-center gap-8">
+            <a href="/" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الرئيسية</a>
+            <a href="/climate.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">التحكم بالمناخ</a>
+            <a href="/irrigation.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">نظام الري</a>
+            <a href="/inventory.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">المخزون</a>
+            <a href="/ai.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الذكاء الاصطناعي</a>
+            <a href="/admin.html" class="text-base font-bold text-primary">الإدارة</a>
+            <button id="logoutBtn" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors flex items-center gap-2">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>خروج</span>
+            </button>
+          </div>
+          <button id="mobile-menu-btn" class="md:hidden text-slate-600 text-xl p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white/95 backdrop-blur-lg">
+        <div class="px-4 py-4 space-y-2">
+          <a href="/" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الرئيسية</a>
+          <a href="/climate.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">التحكم بالمناخ</a>
+          <a href="/irrigation.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">نظام الري</a>
+          <a href="/inventory.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">المخزون</a>
+          <a href="/ai.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الذكاء الاصطناعي</a>
+          <a href="/admin.html" class="block px-4 py-3 text-base font-bold text-primary bg-green-50 rounded-xl">الإدارة</a>
+          <button id="logoutBtnMobile" class="w-full text-right px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">تسجيل خروج</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      
+      <!-- Page Header -->
+      <div class="mb-10">
+        <h1 class="text-4xl font-bold text-slate-900 mb-3">
+          <i class="fa-solid fa-users-gear ml-3 text-emerald-600"></i>
+          إدارة المستخدمين
+        </h1>
+        <p class="text-slate-500 text-lg">إضافة وتعديل وحذف المستخدمين في النظام</p>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-500 text-sm font-medium">إجمالي المستخدمين</p>
+              <p id="totalUsers" class="text-3xl font-bold text-slate-900 mt-1">0</p>
+            </div>
+            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-users text-2xl text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-500 text-sm font-medium">الطلاب</p>
+              <p id="totalStudents" class="text-3xl font-bold text-slate-900 mt-1">0</p>
+            </div>
+            <div class="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-user-graduate text-2xl text-emerald-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-500 text-sm font-medium">المنتسبين</p>
+              <p id="totalStaff" class="text-3xl font-bold text-slate-900 mt-1">0</p>
+            </div>
+            <div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-user-tie text-2xl text-amber-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Bar -->
+      <div class="flex flex-col gap-4 mb-6">
+        <button id="addUserBtn" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/25 transition-all hover:scale-105 flex items-center justify-center gap-3">
+          <i class="fa-solid fa-user-plus"></i>
+          إضافة مستخدم جديد
+        </button>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div class="relative flex-1">
+            <input 
+              type="text" 
+              id="searchInput"
+              placeholder="البحث عن مستخدم..."
+              class="w-full px-5 py-3 pr-12 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+            >
+            <i class="fa-solid fa-search absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          </div>
+          <select id="filterType" class="px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-emerald-500">
+            <option value="all">الكل</option>
+            <option value="student">الطلاب</option>
+            <option value="staff">المنتسبين</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[700px]">
+            <thead class="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th class="px-4 sm:px-6 py-4 text-right text-xs sm:text-sm font-bold text-slate-700">الاسم</th>
+                <th class="px-4 sm:px-6 py-4 text-right text-xs sm:text-sm font-bold text-slate-700">اسم المستخدم</th>
+                <th class="px-4 sm:px-6 py-4 text-right text-xs sm:text-sm font-bold text-slate-700">النوع</th>
+                <th class="px-4 sm:px-6 py-4 text-right text-xs sm:text-sm font-bold text-slate-700 hidden sm:table-cell">القسم</th>
+                <th class="px-4 sm:px-6 py-4 text-right text-xs sm:text-sm font-bold text-slate-700 hidden md:table-cell">المرحلة/الشعبة</th>
+                <th class="px-4 sm:px-6 py-4 text-right text-xs sm:text-sm font-bold text-slate-700 hidden lg:table-cell">تاريخ الإنشاء</th>
+                <th class="px-4 sm:px-6 py-4 text-center text-xs sm:text-sm font-bold text-slate-700">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <!-- Users will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+        <!-- Mobile hint -->
+        <div class="sm:hidden px-4 py-2 text-xs text-slate-400 text-center bg-slate-50 border-t border-slate-100">
+          <i class="fa-solid fa-arrows-left-right ml-1"></i> مرر لرؤية المزيد
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden py-16 text-center">
+          <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fa-solid fa-users-slash text-4xl text-slate-400"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-700 mb-2">لا يوجد مستخدمين</h3>
+          <p class="text-slate-500 mb-6">ابدأ بإضافة مستخدم جديد للنظام</p>
+          <button onclick="openAddModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors">
+            <i class="fa-solid fa-user-plus ml-2"></i>
+            إضافة مستخدم
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+      <div class="absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="modal-content bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] sm:max-h-[90vh] overflow-y-auto">
+          <!-- Modal Header -->
+          <div class="px-8 py-6 border-b border-slate-200 flex items-center justify-between">
+            <h2 id="modalTitle" class="text-2xl font-bold text-slate-900">
+              <i class="fa-solid fa-user-plus ml-2 text-emerald-600"></i>
+              إضافة مستخدم جديد
+            </h2>
+            <button onclick="closeModal()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-500 transition-colors">
+              <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <form id="userForm" class="px-8 py-6 space-y-5">
+            <input type="hidden" id="editUserId">
+            
+            <!-- Name -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-2">
+                <i class="fa-solid fa-user ml-1 text-emerald-600"></i>
+                الاسم الكامل <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="userName" 
+                required
+                class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                placeholder="أدخل الاسم الكامل"
+              >
+            </div>
+
+            <!-- User Type -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-2">
+                <i class="fa-solid fa-id-badge ml-1 text-emerald-600"></i>
+                نوع المستخدم <span class="text-red-500">*</span>
+              </label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="relative">
+                  <input type="radio" name="userType" value="student" class="peer sr-only" checked>
+                  <div class="p-4 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer transition-all peer-checked:bg-emerald-50 peer-checked:border-emerald-500 hover:border-slate-300">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-user-graduate text-emerald-600"></i>
+                      </div>
+                      <span class="font-bold text-slate-700">طالب</span>
+                    </div>
+                  </div>
+                </label>
+                <label class="relative">
+                  <input type="radio" name="userType" value="staff" class="peer sr-only">
+                  <div class="p-4 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer transition-all peer-checked:bg-amber-50 peer-checked:border-amber-500 hover:border-slate-300">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-user-tie text-amber-600"></i>
+                      </div>
+                      <span class="font-bold text-slate-700">منتسب</span>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Department -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-2">
+                <i class="fa-solid fa-building ml-1 text-emerald-600"></i>
+                القسم <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="userDepartment" 
+                required
+                class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                placeholder="مثال: قسم علوم الحاسوب"
+              >
+            </div>
+
+            <!-- Student-specific fields -->
+            <div id="studentFields">
+              <!-- Stage -->
+              <div class="mb-5">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">
+                  <i class="fa-solid fa-layer-group ml-1 text-emerald-600"></i>
+                  المرحلة <span class="text-red-500">*</span>
+                </label>
+                <select 
+                  id="userStage"
+                  class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                >
+                  <option value="">اختر المرحلة</option>
+                  <option value="الأولى">المرحلة الأولى</option>
+                  <option value="الثانية">المرحلة الثانية</option>
+                  <option value="الثالثة">المرحلة الثالثة</option>
+                  <option value="الرابعة">المرحلة الرابعة</option>
+                  <option value="الخامسة">المرحلة الخامسة</option>
+                </select>
+              </div>
+
+              <!-- Section -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">
+                  <i class="fa-solid fa-users-rectangle ml-1 text-emerald-600"></i>
+                  الشعبة <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="userSection"
+                  class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                  placeholder="مثال: أ"
+                >
+              </div>
+            </div>
+
+            <!-- Reset Password (for edit mode) -->
+            <div id="resetPasswordSection" class="hidden">
+              <label class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl cursor-pointer hover:bg-amber-100 transition-colors">
+                <input type="checkbox" id="resetPassword" class="w-5 h-5 text-amber-600 rounded focus:ring-amber-500">
+                <span class="font-medium text-amber-700">
+                  <i class="fa-solid fa-key ml-1"></i>
+                  إعادة تعيين كلمة المرور
+                </span>
+              </label>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex gap-3 pt-4">
+              <button 
+                type="submit" 
+                id="submitUserBtn"
+                class="flex-1 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+              >
+                <i class="fa-solid fa-check"></i>
+                <span id="submitBtnText">إضافة المستخدم</span>
+              </button>
+              <button 
+                type="button" 
+                onclick="closeModal()"
+                class="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors"
+              >
+                إلغاء
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credentials Modal -->
+    <div id="credentialsModal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay absolute inset-0" onclick="closeCredentialsModal()"></div>
+      <div class="absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="modal-content bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md">
+          <!-- Modal Header -->
+          <div class="px-8 py-6 border-b border-slate-200 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-circle-check text-4xl text-green-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900">تم إنشاء المستخدم بنجاح!</h2>
+            <p class="text-slate-500 mt-2">احفظ بيانات الدخول التالية</p>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="px-8 py-6">
+            <div class="credential-box rounded-2xl p-6 space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-slate-500 mb-1">اسم المستخدم</p>
+                  <p id="newUsername" class="text-xl font-bold text-slate-900 font-mono" dir="ltr">---</p>
+                </div>
+                <button id="copyUsernameBtn" onclick="copyWithFeedback('newUsername', 'copyUsernameBtn')" class="p-3 bg-white rounded-lg hover:bg-green-100 transition-colors" title="نسخ">
+                  <i class="fa-solid fa-copy text-green-600"></i>
+                </button>
+              </div>
+              <div class="border-t border-green-300"></div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-slate-500 mb-1">كلمة المرور</p>
+                  <p id="newPassword" class="text-xl font-bold text-slate-900 font-mono" dir="ltr">---</p>
+                </div>
+                <button id="copyPasswordBtn" onclick="copyWithFeedback('newPassword', 'copyPasswordBtn')" class="p-3 bg-white rounded-lg hover:bg-green-100 transition-colors" title="نسخ">
+                  <i class="fa-solid fa-copy text-green-600"></i>
+                </button>
+              </div>
+            </div>
+
+            <button id="copyAllBtn" onclick="copyAllWithFeedback()" class="w-full mt-4 py-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
+              <i id="copyAllIcon" class="fa-solid fa-clipboard"></i>
+              <span id="copyAllText">نسخ الكل</span>
+            </button>
+
+            <p class="text-center text-amber-600 text-sm mt-4 p-3 bg-amber-50 rounded-xl">
+              <i class="fa-solid fa-triangle-exclamation ml-1"></i>
+              تأكد من حفظ هذه البيانات، لن تظهر مرة أخرى!
+            </p>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="px-8 py-6 border-t border-slate-200">
+            <button onclick="closeCredentialsModal()" class="w-full py-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-colors">
+              حسناً، تم الحفظ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden">
+      <div class="modal-overlay absolute inset-0" onclick="closeDeleteModal()"></div>
+      <div class="absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="modal-content bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md">
+          <div class="p-8 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-trash text-3xl text-red-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">تأكيد الحذف</h2>
+            <p class="text-slate-500 mb-6">
+              هل أنت متأكد من حذف المستخدم <strong id="deleteUserName" class="text-slate-900">---</strong>؟
+              <br>
+              <span class="text-red-500 text-sm">لا يمكن التراجع عن هذا الإجراء.</span>
+            </p>
+            <input type="hidden" id="deleteUserId">
+            <div class="flex gap-3">
+              <button onclick="confirmDelete()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-colors">
+                <i class="fa-solid fa-trash ml-2"></i>
+                نعم، احذف
+              </button>
+              <button onclick="closeDeleteModal()" class="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors">
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-6 z-50 hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white rounded-xl shadow-lg flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-check-circle text-green-400"></i>
+        <span id="toastMessage">تم بنجاح</span>
+      </div>
+    </div>
+
+    <script>
+      // ========== Authentication Check ==========
+      const token = localStorage.getItem('eco_token');
+      const user = JSON.parse(localStorage.getItem('eco_user') || '{}');
+
+      if (!token || user.role !== 'admin') {
+        window.location.href = '/login.html';
+      }
+
+      // API Headers
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+      // ========== Global Variables ==========
+      let allUsers = [];
+      let isEditMode = false;
+
+      // ========== Initialize ==========
+      document.addEventListener('DOMContentLoaded', () => {
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+        
+        if (mobileMenuBtn && mobileMenu) {
+          mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = mobileMenuBtn.querySelector('i');
+            if (mobileMenu.classList.contains('hidden')) {
+              icon.className = 'fa-solid fa-bars';
+            } else {
+              icon.className = 'fa-solid fa-xmark';
+            }
+          });
+        }
+        
+        if (logoutBtnMobile) {
+          logoutBtnMobile.addEventListener('click', logout);
+        }
+
+        loadUsers();
+        setupEventListeners();
+      });
+
+      // ========== Event Listeners ==========
+      function setupEventListeners() {
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // Add user button
+        document.getElementById('addUserBtn').addEventListener('click', openAddModal);
+
+        // User type change
+        document.querySelectorAll('input[name="userType"]').forEach(radio => {
+          radio.addEventListener('change', handleUserTypeChange);
+        });
+
+        // Form submit
+        document.getElementById('userForm').addEventListener('submit', handleFormSubmit);
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', filterUsers);
+
+        // Filter by type
+        document.getElementById('filterType').addEventListener('change', filterUsers);
+      }
+
+      // ========== API Functions ==========
+      async function loadUsers() {
+        try {
+          const response = await fetch('/api/admin/users', {
+            headers: authHeaders
+          });
+
+          if (response.status === 401 || response.status === 403) {
+            logout();
+            return;
+          }
+
+          const data = await response.json();
+          if (data.ok) {
+            allUsers = data.users;
+            renderUsers(allUsers);
+            updateStats();
+          }
+        } catch (error) {
+          console.error('Error loading users:', error);
+          showToast('خطأ في تحميل المستخدمين', 'error');
+        }
+      }
+
+      async function createUser(userData) {
+        try {
+          const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify(userData)
+          });
+
+          const data = await response.json();
+          if (data.ok) {
+            showCredentials(data.user.username, data.user.password);
+            loadUsers();
+            closeModal();
+          } else {
+            showToast(data.error, 'error');
+          }
+        } catch (error) {
+          console.error('Error creating user:', error);
+          showToast('خطأ في إنشاء المستخدم', 'error');
+        }
+      }
+
+      async function updateUser(userId, userData) {
+        try {
+          const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify(userData)
+          });
+
+          const data = await response.json();
+          if (data.ok) {
+            if (data.newPassword) {
+              showCredentials(data.user.username, data.newPassword);
+            } else {
+              showToast('تم تحديث البيانات بنجاح', 'success');
+            }
+            loadUsers();
+            closeModal();
+          } else {
+            showToast(data.error, 'error');
+          }
+        } catch (error) {
+          console.error('Error updating user:', error);
+          showToast('خطأ في تحديث المستخدم', 'error');
+        }
+      }
+
+      async function deleteUser(userId) {
+        try {
+          const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: authHeaders
+          });
+
+          const data = await response.json();
+          if (data.ok) {
+            showToast(data.message, 'success');
+            loadUsers();
+          } else {
+            showToast(data.error, 'error');
+          }
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          showToast('خطأ في حذف المستخدم', 'error');
+        }
+      }
+
+      // ========== UI Functions ==========
+      function renderUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+        const emptyState = document.getElementById('emptyState');
+
+        if (users.length === 0) {
+          tbody.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        tbody.innerHTML = users.map(user => `
+          <tr class="table-row border-b border-slate-100 transition-colors">
+            <td class="px-4 sm:px-6 py-4">
+              <div class="flex items-center gap-2 sm:gap-3">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 ${user.userType === 'student' ? 'bg-emerald-100' : 'bg-amber-100'} rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fa-solid ${user.userType === 'student' ? 'fa-user-graduate text-emerald-600' : 'fa-user-tie text-amber-600'} text-sm sm:text-base"></i>
+                </div>
+                <span class="font-semibold text-slate-900 text-sm sm:text-base">${user.name}</span>
+              </div>
+            </td>
+            <td class="px-4 sm:px-6 py-4">
+              <code class="px-2 sm:px-3 py-1 bg-slate-100 rounded-lg text-slate-700 text-xs sm:text-sm" dir="ltr">${user.username}</code>
+            </td>
+            <td class="px-4 sm:px-6 py-4">
+              <span class="px-2 sm:px-3 py-1 ${user.userType === 'student' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} rounded-full text-xs sm:text-sm font-medium whitespace-nowrap">
+                ${user.userType === 'student' ? 'طالب' : 'منتسب'}
+              </span>
+            </td>
+            <td class="px-4 sm:px-6 py-4 text-slate-600 text-sm hidden sm:table-cell">${user.department || '-'}</td>
+            <td class="px-4 sm:px-6 py-4 text-slate-600 text-sm hidden md:table-cell">
+              ${user.userType === 'student' ? `${user.stage || '-'} / ${user.section || '-'}` : '-'}
+            </td>
+            <td class="px-4 sm:px-6 py-4 text-slate-500 text-sm hidden lg:table-cell">
+              ${new Date(user.createdAt).toLocaleDateString('ar-IQ')}
+            </td>
+            <td class="px-4 sm:px-6 py-4">
+              <div class="flex items-center justify-center gap-1 sm:gap-2">
+                <button onclick="openEditModal('${user.id}')" class="p-1.5 sm:p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors" title="تعديل">
+                  <i class="fa-solid fa-pen-to-square text-sm"></i>
+                </button>
+                <button onclick="openDeleteModal('${user.id}', '${user.name}')" class="p-1.5 sm:p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors" title="حذف">
+                  <i class="fa-solid fa-trash text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      function updateStats() {
+        document.getElementById('totalUsers').textContent = allUsers.length;
+        document.getElementById('totalStudents').textContent = allUsers.filter(u => u.userType === 'student').length;
+        document.getElementById('totalStaff').textContent = allUsers.filter(u => u.userType === 'staff').length;
+      }
+
+      function filterUsers() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filterType = document.getElementById('filterType').value;
+
+        let filtered = allUsers;
+
+        if (filterType !== 'all') {
+          filtered = filtered.filter(u => u.userType === filterType);
+        }
+
+        if (searchTerm) {
+          filtered = filtered.filter(u => 
+            u.name.toLowerCase().includes(searchTerm) ||
+            u.username.toLowerCase().includes(searchTerm) ||
+            (u.department && u.department.toLowerCase().includes(searchTerm))
+          );
+        }
+
+        renderUsers(filtered);
+      }
+
+      // ========== Modal Functions ==========
+      function openAddModal() {
+        isEditMode = false;
+        document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-plus ml-2 text-emerald-600"></i>إضافة مستخدم جديد';
+        document.getElementById('submitBtnText').textContent = 'إضافة المستخدم';
+        document.getElementById('resetPasswordSection').classList.add('hidden');
+        document.getElementById('userForm').reset();
+        document.getElementById('editUserId').value = '';
+        document.querySelector('input[name="userType"][value="student"]').checked = true;
+        handleUserTypeChange();
+        document.getElementById('userModal').classList.remove('hidden');
+      }
+
+      function openEditModal(userId) {
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) return;
+
+        isEditMode = true;
+        document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-pen ml-2 text-blue-600"></i>تعديل المستخدم';
+        document.getElementById('submitBtnText').textContent = 'حفظ التغييرات';
+        document.getElementById('resetPasswordSection').classList.remove('hidden');
+        document.getElementById('resetPassword').checked = false;
+
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('userName').value = user.name;
+        document.getElementById('userDepartment').value = user.department || '';
+        
+        document.querySelector(`input[name="userType"][value="${user.userType}"]`).checked = true;
+        handleUserTypeChange();
+
+        if (user.userType === 'student') {
+          document.getElementById('userStage').value = user.stage || '';
+          document.getElementById('userSection').value = user.section || '';
+        }
+
+        document.getElementById('userModal').classList.remove('hidden');
+      }
+
+      function closeModal() {
+        document.getElementById('userModal').classList.add('hidden');
+      }
+
+      function openDeleteModal(userId, userName) {
+        document.getElementById('deleteUserId').value = userId;
+        document.getElementById('deleteUserName').textContent = userName;
+        document.getElementById('deleteModal').classList.remove('hidden');
+      }
+
+      function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+      }
+
+      function confirmDelete() {
+        const userId = document.getElementById('deleteUserId').value;
+        deleteUser(userId);
+        closeDeleteModal();
+      }
+
+      function showCredentials(username, password) {
+        document.getElementById('newUsername').textContent = username;
+        document.getElementById('newPassword').textContent = password;
+        document.getElementById('credentialsModal').classList.remove('hidden');
+      }
+
+      function closeCredentialsModal() {
+        document.getElementById('credentialsModal').classList.add('hidden');
+      }
+
+      // ========== Form Handling ==========
+      function handleUserTypeChange() {
+        const userType = document.querySelector('input[name="userType"]:checked').value;
+        const studentFields = document.getElementById('studentFields');
+        const stageInput = document.getElementById('userStage');
+        const sectionInput = document.getElementById('userSection');
+
+        if (userType === 'student') {
+          studentFields.classList.remove('hidden');
+          stageInput.required = true;
+          sectionInput.required = true;
+        } else {
+          studentFields.classList.add('hidden');
+          stageInput.required = false;
+          sectionInput.required = false;
+        }
+      }
+
+      function handleFormSubmit(e) {
+        e.preventDefault();
+
+        const userType = document.querySelector('input[name="userType"]:checked').value;
+        
+        const userData = {
+          name: document.getElementById('userName').value,
+          userType: userType,
+          department: document.getElementById('userDepartment').value,
+        };
+
+        if (userType === 'student') {
+          userData.stage = document.getElementById('userStage').value;
+          userData.section = document.getElementById('userSection').value;
+        }
+
+        if (isEditMode) {
+          userData.resetPassword = document.getElementById('resetPassword').checked;
+          const userId = document.getElementById('editUserId').value;
+          updateUser(userId, userData);
+        } else {
+          createUser(userData);
+        }
+      }
+
+      // ========== Utility Functions ==========
+      function copyToClipboard(elementId, callback) {
+        const text = document.getElementById(elementId).textContent;
+        
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast('تم النسخ!', 'success');
+            if (callback) callback(true);
+          }).catch(err => {
+            // Fallback if clipboard API fails
+            const success = fallbackCopyToClipboard(text);
+            if (callback) callback(success);
+          });
+        } else {
+          // Fallback for older browsers
+          const success = fallbackCopyToClipboard(text);
+          if (callback) callback(success);
+        }
+      }
+      
+      function copyWithFeedback(elementId, buttonId) {
+        const btn = document.getElementById(buttonId);
+        const originalIcon = btn.innerHTML;
+        
+        copyToClipboard(elementId, (success) => {
+          if (success) {
+            // Show checkmark
+            btn.innerHTML = '<i class="fa-solid fa-check text-green-600"></i>';
+            btn.classList.add('bg-green-100');
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+              btn.innerHTML = originalIcon;
+              btn.classList.remove('bg-green-100');
+            }, 2000);
+          }
+        });
+      }
+
+      function fallbackCopyToClipboard(text) {
+        // Create temporary textarea
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        let success = false;
+        try {
+          success = document.execCommand('copy');
+          if (success) {
+            showToast('تم النسخ!', 'success');
+          } else {
+            showToast('فشل النسخ، حاول النسخ يدوياً', 'error');
+          }
+        } catch (err) {
+          showToast('فشل النسخ، حاول النسخ يدوياً', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+        return success;
+      }
+
+      function copyAllCredentials(callback) {
+        const username = document.getElementById('newUsername').textContent;
+        const password = document.getElementById('newPassword').textContent;
+        const text = `اسم المستخدم: ${username}\nكلمة المرور: ${password}`;
+        
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast('تم نسخ بيانات الدخول!', 'success');
+            if (callback) callback(true);
+          }).catch(err => {
+            const success = fallbackCopyToClipboard(text);
+            if (callback) callback(success);
+          });
+        } else {
+          const success = fallbackCopyToClipboard(text);
+          if (callback) callback(success);
+        }
+      }
+      
+      function copyAllWithFeedback() {
+        const btn = document.getElementById('copyAllBtn');
+        const icon = document.getElementById('copyAllIcon');
+        const text = document.getElementById('copyAllText');
+        
+        copyAllCredentials((success) => {
+          if (success) {
+            // Show success state
+            icon.className = 'fa-solid fa-check';
+            text.textContent = 'تم النسخ!';
+            btn.classList.remove('bg-emerald-100');
+            btn.classList.add('bg-green-500', 'text-white');
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+              icon.className = 'fa-solid fa-clipboard';
+              text.textContent = 'نسخ الكل';
+              btn.classList.remove('bg-green-500', 'text-white');
+              btn.classList.add('bg-emerald-100');
+            }, 2000);
+          }
+        });
+      }
+
+      function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastMessage = document.getElementById('toastMessage');
+
+        toastMessage.textContent = message;
+        
+        if (type === 'error') {
+          toastIcon.className = 'fa-solid fa-circle-xmark text-red-400';
+        } else {
+          toastIcon.className = 'fa-solid fa-check-circle text-green-400';
+        }
+
+        toast.classList.remove('hidden');
+        toast.classList.add('fade-in');
+
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 3000);
+      }
+
+      function logout() {
+        localStorage.removeItem('eco_token');
+        localStorage.removeItem('eco_user');
+        window.location.href = '/login.html';
+      }
+
+      
+    </script>
+
+  </body>
+</html>
+

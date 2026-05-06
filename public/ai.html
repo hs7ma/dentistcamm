@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الذكاء الاصطناعي - إيكو كونترول</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Noto Kufi Arabic', 'Cairo', 'sans-serif'] },
+          colors: {
+            primary: '#059669',
+            secondary: '#475569',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { direction: rtl; scroll-behavior: smooth; }
+    body {
+      font-family: 'Noto Kufi Arabic', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+      color: #064e3b;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+    ::selection { background: #10b981; color: white; }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .btn-primary {
+      background: #059669; color: white; font-weight: 600;
+      padding: 0.75rem 1.5rem; border-radius: 1rem; border: none; cursor: pointer;
+      transition: all 0.2s ease; display: inline-flex; align-items: center;
+      justify-content: center; gap: 0.5rem;
+    }
+    .btn-primary:hover { background: #047857; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(5,150,105,0.2); }
+    .btn-secondary {
+      background: #ffffff; color: #064e3b; font-weight: 600;
+      padding: 0.75rem 1.5rem; border-radius: 1rem; border: 1px solid #d1fae5;
+      cursor: pointer; transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .btn-secondary:hover { background: #f8fafc; border-color: #10b981; }
+    .message-user {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white; border-radius: 1rem 1rem 4px 1rem;
+    }
+    .message-assistant {
+      background: #ffffff; color: #064e3b;
+      border: 1px solid #d1fae5; border-radius: 1rem 1rem 1rem 4px;
+    }
+    .input-field {
+      background: #ffffff; border: 1px solid #d1fae5; border-radius: 1rem;
+      padding: 1rem 1.25rem; font-size: 1rem; color: #064e3b;
+      transition: all 0.2s ease; width: 100%; font-family: inherit;
+    }
+    .input-field:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5,150,105,0.1); outline: none; }
+    .input-field::placeholder { color: #6b7280; }
+
+    /* Markdown styles */
+    .prose-eco { color: #064e3b; line-height: 1.8; }
+    .prose-eco h1, .prose-eco h2, .prose-eco h3 { color: #064e3b; font-weight: 700; margin-top: 1em; margin-bottom: 0.5em; }
+    .prose-eco strong { color: #047857; }
+    .prose-eco ul, .prose-eco ol { padding-right: 1.5rem; margin: 0.5em 0; }
+    .prose-eco li { margin-bottom: 0.5rem; }
+    .prose-eco p { margin-bottom: 0.5em; }
+    .prose-eco code { background: #f0fdf4; padding: 0.15em 0.4em; border-radius: 0.25em; font-size: 0.85em; color: #047857; }
+    .prose-eco pre { background: #064e3b; color: #ecfdf5; border-radius: 0.75rem; padding: 1em; overflow-x: auto; margin: 0.75em 0; }
+    .prose-eco pre code { background: none; color: inherit; padding: 0; }
+    .prose-eco blockquote { border-right: 3px solid #10b981; padding-right: 1em; margin: 0.75em 0; color: #065f46; }
+    .prose-eco a { color: #059669; text-decoration: underline; }
+    .prose-eco table { border-collapse: collapse; width: 100%; margin: 0.75em 0; }
+    .prose-eco th, .prose-eco td { border: 1px solid #d1fae5; padding: 0.5em 0.75em; text-align: right; }
+    .prose-eco th { background: #f0fdf4; font-weight: 600; }
+
+    .loading-dot {
+      width: 8px; height: 8px; background: #059669;
+      border-radius: 50%; animation: pulse-soft 1.4s infinite ease-in-out;
+    }
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .sidebar-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(4px); z-index: 40; transition: opacity 0.3s;
+    }
+    .sidebar { transition: transform 0.3s ease; }
+    .sidebar-hidden { transform: translateX(100%); }
+
+    .camera-modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); padding: 1rem; }
+
+    .quick-action-card {
+      transition: all 0.3s ease; cursor: pointer;
+    }
+    .quick-action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeInUp 0.3s ease forwards; }
+  </style>
+</head>
+<body>
+  <div id="app" class="flex h-screen overflow-hidden">
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay hidden" onclick="toggleSidebar(false)"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar sidebar-hidden fixed inset-y-0 right-0 z-50 w-72 md:relative md:transform-none flex flex-col bg-white/95 backdrop-blur-xl border-l border-[#d1fae5] shadow-xl md:shadow-none h-screen">
+      <!-- Header -->
+      <div class="flex-shrink-0 p-4 border-b border-[#d1fae5]">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-[#059669] flex items-center justify-center">
+              <i class="fa-solid fa-leaf text-white text-sm"></i>
+            </div>
+            <span class="font-bold text-[#064e3b]">المحادثات</span>
+          </div>
+          <button onclick="toggleSidebar(false)" class="md:hidden p-2 rounded-lg hover:bg-[#f8fafc] transition-colors">
+            <i class="fa-solid fa-xmark text-[#6b7280]"></i>
+          </button>
+        </div>
+        <button onclick="newChat()" class="w-full btn-primary text-sm">
+          <i class="fa-solid fa-plus"></i>
+          محادثة جديدة
+        </button>
+      </div>
+
+      <!-- Chat List -->
+      <div id="chatList" class="flex-1 overflow-y-auto p-3 space-y-1">
+        <div class="text-center py-10">
+          <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#f0fdf4] flex items-center justify-center">
+            <i class="fa-solid fa-comments text-[#6b7280]"></i>
+          </div>
+          <p class="text-sm text-[#6b7280]">لا توجد محادثات</p>
+          <p class="text-xs text-[#6b7280] mt-1">ابدأ محادثة جديدة!</p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex-shrink-0 p-4 border-t border-[#d1fae5]">
+        <div class="flex items-center gap-2 text-xs text-[#6b7280]">
+          <div class="w-2 h-2 rounded-full bg-[#059669] animate-pulse"></div>
+          <span>مدعوم بـ Gemini AI</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+      <!-- Header -->
+      <header class="flex-shrink-0 px-4 md:px-6 py-4 glass border-b border-[#d1fae5]">
+        <div class="flex items-center justify-between max-w-4xl mx-auto">
+          <div class="flex items-center gap-3">
+            <button onclick="toggleSidebar(true)" class="md:hidden p-2 rounded-xl hover:bg-[#f8fafc] transition-colors">
+              <i class="fa-solid fa-bars text-[#065f46]"></i>
+            </button>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#059669] flex items-center justify-center shadow-lg shadow-emerald-200/50">
+                <i class="fa-solid fa-leaf text-white"></i>
+              </div>
+              <div>
+                <h1 class="text-lg font-bold text-[#064e3b]">إيكو كونترول</h1>
+                <p class="text-xs text-[#6b7280] hidden sm:block">مساعد الدفيئات الذكي</p>
+              </div>
+            </div>
+          </div>
+          <button onclick="newChat()" class="btn-secondary text-sm px-4 py-2">
+            محادثة جديدة
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages Area -->
+      <div id="messagesArea" class="flex-1 overflow-y-auto px-4 md:px-6 py-6">
+        <div id="messagesContainer" class="max-w-3xl mx-auto space-y-6">
+          <!-- Welcome Message (shown when no messages) -->
+          <div id="welcomeScreen" class="text-center py-8 md:py-12">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center shadow-xl shadow-emerald-200/50">
+              <i class="fa-solid fa-leaf text-3xl text-white"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold text-[#064e3b] mb-3">
+              مرحباً بك في إيكو كونترول
+            </h2>
+            <p class="text-[#6b7280] max-w-md mx-auto text-sm md:text-base mb-8">
+              مساعدك الذكي لمراقبة وإدارة الدفيئات الزراعية. اسألني عن درجة الحرارة، الري، أو أي شيء يتعلق بدفيئتك!
+            </p>
+
+            <div class="mt-8 mb-6">
+              <h3 class="text-lg md:text-xl font-semibold text-[#064e3b] mb-2">
+                🌿 تشخيص وتحليل النباتات
+              </h3>
+              <p class="text-[#6b7280] text-sm mb-6">
+                استخدم الذكاء الاصطناعي لتشخيص أمراض النباتات وتحليل حالتها الصحية
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              <button onclick="quickAction('أريد تشخيص مرض في نباتي. ما هي الأعراض التي يجب أن أبحث عنها؟')" class="quick-action-card group relative p-4 rounded-2xl bg-white border border-[#e5e7eb] hover:border-transparent hover:shadow-lg shadow-red-200/50 text-right overflow-hidden">
+                <div class="relative flex items-start gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-md shadow-red-200/50">
+                    <i class="fa-solid fa-stethoscope text-white text-sm"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-semibold text-[#1f2937] text-sm mb-1 group-hover:text-[#064e3b] transition-colors">تشخيص مرض النبات</h4>
+                    <p class="text-xs text-[#6b7280] leading-relaxed">تحليل أعراض المرض وتحديد السبب</p>
+                  </div>
+                </div>
+              </button>
+
+              <button onclick="quickAction('أريد تحليل حالة نباتي الصحية. كيف يمكنني معرفة إذا كان النبات بصحة جيدة؟')" class="quick-action-card group relative p-4 rounded-2xl bg-white border border-[#e5e7eb] hover:border-transparent hover:shadow-lg shadow-blue-200/50 text-right overflow-hidden">
+                <div class="relative flex items-start gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-200/50">
+                    <i class="fa-solid fa-microscope text-white text-sm"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-semibold text-[#1f2937] text-sm mb-1 group-hover:text-[#064e3b] transition-colors">تحليل حالة النبات</h4>
+                    <p class="text-xs text-[#6b7280] leading-relaxed">فحص شامل لصحة النبات</p>
+                  </div>
+                </div>
+              </button>
+
+              <button onclick="quickAction('ما هي أكثر الآفات شيوعاً التي تصيب النباتات وكيف أكافحها؟')" class="quick-action-card group relative p-4 rounded-2xl bg-white border border-[#e5e7eb] hover:border-transparent hover:shadow-lg shadow-amber-200/50 text-right overflow-hidden">
+                <div class="relative flex items-start gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md shadow-amber-200/50">
+                    <i class="fa-solid fa-bug text-white text-sm"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-semibold text-[#1f2937] text-sm mb-1 group-hover:text-[#064e3b] transition-colors">مكافحة الآفات</h4>
+                    <p class="text-xs text-[#6b7280] leading-relaxed">التعرف على الآفات وطرق العلاج</p>
+                  </div>
+                </div>
+              </button>
+
+              <button onclick="quickAction('أعطني نصائح شاملة للعناية بالنباتات في الدفيئة')" class="quick-action-card group relative p-4 rounded-2xl bg-white border border-[#e5e7eb] hover:border-transparent hover:shadow-lg shadow-emerald-200/50 text-right overflow-hidden">
+                <div class="relative flex items-start gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-200/50">
+                    <i class="fa-solid fa-seedling text-white text-sm"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-semibold text-[#1f2937] text-sm mb-1 group-hover:text-[#064e3b] transition-colors">نصائح العناية</h4>
+                    <p class="text-xs text-[#6b7280] leading-relaxed">إرشادات للعناية المثلى بالنباتات</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <div class="mt-8 p-4 rounded-xl bg-gradient-to-r from-[#ecfdf5] to-[#f0fdf4] border border-[#d1fae5] max-w-md mx-auto">
+              <div class="flex items-center gap-3 justify-center">
+                <i class="fa-solid fa-camera text-[#059669]"></i>
+                <p class="text-sm text-[#065f46]">
+                  <span class="font-medium">💡 نصيحة:</span> ارفع صورة لنباتك للحصول على تشخيص دقيق!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="flex-shrink-0 p-4 md:p-6 glass border-t border-[#d1fae5]">
+        <div class="max-w-3xl mx-auto">
+          <form id="chatForm" onsubmit="handleFormSubmit(event)" class="space-y-3">
+            <!-- Pending Image Preview -->
+            <div id="imagePreview" class="hidden flex items-center gap-3 p-3 bg-white rounded-xl border border-[#d1fae5]">
+              <div class="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+                <img id="previewImg" src="" alt="صورة" class="w-full h-full object-cover" />
+                <div id="imageUploading" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <i class="fa-solid fa-spinner fa-spin text-white"></i>
+                </div>
+              </div>
+              <span class="text-sm text-[#6b7280] flex-1">تم إرفاق صورة</span>
+              <button type="button" onclick="clearPendingImage()" class="p-2 hover:bg-[#f8fafc] rounded-lg transition-colors">
+                <i class="fa-solid fa-xmark text-[#6b7280]"></i>
+              </button>
+            </div>
+
+            <!-- Input Row -->
+            <div class="flex items-center gap-2 md:gap-3">
+              <button type="button" onclick="openCamera()" class="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-xl border border-[#d1fae5] bg-white flex items-center justify-center hover:border-[#10b981] hover:bg-[#f8fafc] transition-all" title="التقاط صورة">
+                <i class="fa-solid fa-camera text-[#6b7280]"></i>
+              </button>
+
+              <button type="button" onclick="document.getElementById('fileInput').click()" class="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-xl border border-[#d1fae5] bg-white flex items-center justify-center hover:border-[#10b981] hover:bg-[#f8fafc] transition-all" title="رفع صورة">
+                <i class="fa-solid fa-image text-[#6b7280]"></i>
+              </button>
+
+              <input type="text" id="messageInput" class="input-field flex-1" placeholder="اسأل عن الدفيئة... مثال: كم درجة الحرارة؟" autocomplete="off" />
+
+              <button type="submit" id="sendBtn" class="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-xl bg-[#059669] text-white flex items-center justify-center hover:bg-[#047857] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-200/50 active:scale-95">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </form>
+
+          <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelected(event)" />
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Camera Modal -->
+  <div id="cameraModal" class="camera-modal hidden" onclick="closeCamera(event)">
+    <div class="relative w-full max-w-lg bg-white rounded-2xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between p-4 border-b border-[#d1fae5]">
+        <h3 class="text-lg font-bold text-[#064e3b]">التقاط صورة</h3>
+        <button onclick="closeCamera()" class="p-2 rounded-lg hover:bg-[#f0fdf4] transition-colors">
+          <i class="fa-solid fa-xmark text-[#6b7280]"></i>
+        </button>
+      </div>
+
+      <div class="relative bg-black" style="aspect-ratio: 4/3;">
+        <video id="cameraVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+        <img id="capturedPhoto" src="" alt="" class="hidden w-full h-full object-contain" />
+        <div id="cameraLoading" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-[#064e3b] text-white gap-3">
+          <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+          <p class="text-sm">جاري تشغيل الكاميرا...</p>
+        </div>
+        <div id="cameraError" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-[#064e3b] text-white gap-4 p-6 text-center">
+          <i class="fa-solid fa-camera text-4xl opacity-50"></i>
+          <p id="cameraErrorMsg" class="text-sm"></p>
+          <button onclick="startCamera()" class="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm">
+            إعادة المحاولة
+          </button>
+        </div>
+      </div>
+
+      <div id="cameraControls" class="flex items-center justify-center gap-4 p-4 bg-[#f0fdf4]">
+        <button onclick="retakePhoto()" id="retakeBtn" class="hidden flex items-center gap-2 px-5 py-3 bg-white border border-[#d1fae5] rounded-xl text-[#064e3b] font-medium hover:bg-[#f8fafc] transition-colors">
+          <i class="fa-solid fa-rotate-left"></i>
+          إعادة التصوير
+        </button>
+        <button onclick="confirmPhoto()" id="confirmBtn" class="hidden flex items-center gap-2 px-5 py-3 bg-[#059669] text-white rounded-xl font-medium hover:bg-[#047857] transition-colors shadow-lg shadow-emerald-200/50">
+          <i class="fa-solid fa-check"></i>
+          استخدام الصورة
+        </button>
+        <button onclick="switchCamera()" id="switchBtn" class="p-3 bg-white border border-[#d1fae5] rounded-xl text-[#064e3b] hover:bg-[#f8fafc] transition-colors">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+        <button onclick="capturePhoto()" id="captureBtn" class="w-16 h-16 bg-[#059669] text-white rounded-full flex items-center justify-center hover:bg-[#047857] transition-all shadow-lg shadow-emerald-200/50 active:scale-95">
+          <i class="fa-solid fa-camera text-2xl"></i>
+        </button>
+        <div class="w-11"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let chatId = null;
+    let messages = [];
+    let pendingImageId = null;
+    let pendingPreviewUrl = null;
+    let isImageUploading = false;
+    let isLoading = false;
+    let cameraStream = null;
+    let facingMode = 'environment';
+    let capturedImageData = null;
+
+    const API_BASE = '/api/ai';
+
+    // Configure marked
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+    });
+
+    // ========== Sidebar ==========
+    function toggleSidebar(show) {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (show) {
+        sidebar.classList.remove('sidebar-hidden');
+        overlay.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('sidebar-hidden');
+        overlay.classList.add('hidden');
+      }
+    }
+
+    function updateSidebarOnResize() {
+      if (window.innerWidth >= 768) {
+        document.getElementById('sidebar').classList.remove('sidebar-hidden');
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+      }
+    }
+    window.addEventListener('resize', updateSidebarOnResize);
+    updateSidebarOnResize();
+
+    async function loadChatList() {
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/chats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.ok && data.chats) {
+          renderChatList(data.chats);
+        }
+      } catch (error) {
+        console.error('Error loading chats:', error);
+      }
+    }
+
+    function renderChatList(chats) {
+      const container = document.getElementById('chatList');
+      if (!chats || chats.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#f0fdf4] flex items-center justify-center">
+              <i class="fa-solid fa-comments text-[#6b7280]"></i>
+            </div>
+            <p class="text-sm text-[#6b7280]">لا توجد محادثات</p>
+            <p class="text-xs text-[#6b7280] mt-1">ابدأ محادثة جديدة!</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = chats.map(c => `
+        <button onclick="selectChat('${c.id}')" class="w-full flex items-center gap-3 p-3 rounded-xl text-sm transition-all ${chatId === c.id ? 'bg-[#059669] text-white shadow-lg shadow-emerald-200/50' : 'hover:bg-[#f8fafc] text-[#064e3b]'}">
+          <i class="fa-solid fa-message ${chatId === c.id ? 'text-white/80' : 'text-[#6b7280]'} text-xs"></i>
+          <div class="flex-1 text-right truncate">
+            <p class="truncate text-sm font-medium">محادثة</p>
+            <p class="text-xs mt-0.5 ${chatId === c.id ? 'text-white/70' : 'text-[#6b7280]'}">${formatDate(c.created_at)}</p>
+          </div>
+        </button>
+      `).join('');
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      if (days === 0) {
+        return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      } else if (days === 1) {
+        return 'أمس';
+      } else if (days < 7) {
+        return `منذ ${days} أيام`;
+      } else {
+        return date.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+      }
+    }
+
+    async function selectChat(selectedChatId) {
+      chatId = selectedChatId;
+      messages = [];
+
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/chat/${selectedChatId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.ok && data.messages) {
+          messages = data.messages.map(m => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+
+      renderMessages();
+      loadChatList();
+      toggleSidebar(false);
+    }
+
+    function newChat() {
+      chatId = null;
+      messages = [];
+      clearPendingImage();
+      renderMessages();
+      loadChatList();
+      toggleSidebar(false);
+    }
+
+    // ========== Messages ==========
+    function parseMessageContent(content) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed?.type === 'image' && parsed.fileId) {
+          const supabaseUrl = 'https://sjwsliiyqlkatkdskjxj.supabase.co';
+          const imageUrl = `${supabaseUrl}/storage/v1/object/public/plant-images/${parsed.fileId}`;
+          return { type: 'image', imageUrl, text: parsed.text || '' };
+        }
+      } catch {}
+      return { type: 'text', text: content };
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('messagesContainer');
+      const welcome = document.getElementById('welcomeScreen');
+
+      if (messages.length === 0) {
+        welcome.style.display = 'block';
+        container.innerHTML = '';
+        container.appendChild(welcome);
+        return;
+      }
+
+      welcome.style.display = 'none';
+      container.innerHTML = '';
+
+      messages.forEach((m, index) => {
+        const parsed = parseMessageContent(m.content);
+        const div = document.createElement('div');
+        div.className = `flex gap-3 animate-fade-in ${m.role === 'user' ? 'flex-row-reverse' : ''}`;
+        div.style.animationDelay = `${Math.min(index * 0.05, 0.3)}s`;
+
+        const avatar = m.role === 'user'
+          ? `<div class="flex-shrink-0 w-9 h-9 rounded-xl bg-[#059669] shadow-lg shadow-emerald-200/50 flex items-center justify-center"><i class="fa-solid fa-user text-white text-sm"></i></div>`
+          : `<div class="flex-shrink-0 w-9 h-9 rounded-xl bg-white border border-[#d1fae5] flex items-center justify-center"><i class="fa-solid fa-robot text-[#059669] text-sm"></i></div>`;
+
+        let content = '';
+        if (parsed.type === 'image') {
+          content = `
+            <div class="space-y-3">
+              <div class="relative overflow-hidden rounded-xl max-w-sm">
+                <img src="${parsed.imageUrl}" alt="صورة مرفوعة" class="w-full h-auto max-h-80 object-contain rounded-xl" onerror="this.src='${pendingPreviewUrl || ''}'; this.onerror=null;" />
+              </div>
+              <div class="prose-eco text-sm md:text-base leading-relaxed">${renderMarkdown(parsed.text)}</div>
+            </div>
+          `;
+        } else {
+          content = `<div class="prose-eco text-sm md:text-base leading-relaxed">${renderMarkdown(parsed.text)}</div>`;
+        }
+
+        const bubble = m.role === 'user' ? 'message-user' : 'message-assistant';
+
+        div.innerHTML = `
+          ${avatar}
+          <div class="max-w-[85%] md:max-w-[75%] px-4 py-3 ${bubble}">
+            ${content}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      // Add loading indicator if waiting for response
+      if (isLoading) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'flex gap-3 animate-fade-in';
+        loadingDiv.id = 'loadingIndicator';
+        loadingDiv.innerHTML = `
+          <div class="w-9 h-9 rounded-xl bg-white border border-[#d1fae5] flex items-center justify-center">
+            <i class="fa-solid fa-robot text-[#059669] text-sm"></i>
+          </div>
+          <div class="message-assistant px-5 py-4 flex items-center gap-2">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+          </div>
+        `;
+        container.appendChild(loadingDiv);
+      }
+
+      scrollToBottom();
+    }
+
+    function renderMarkdown(text) {
+      if (!text) return '';
+      try {
+        return marked.parse(text);
+      } catch {
+        return text.replace(/\n/g, '<br>');
+      }
+    }
+
+    function scrollToBottom() {
+      const area = document.getElementById('messagesArea');
+      requestAnimationFrame(() => {
+        area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' });
+      });
+    }
+
+    // ========== Chat ==========
+    function getToken() {
+      const user = JSON.parse(localStorage.getItem('eco_user') || '{}');
+      return localStorage.getItem('eco_token') || '';
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      if (isLoading) return;
+
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+
+      if (!text && !pendingImageId) return;
+      if (isImageUploading) return;
+
+      isLoading = true;
+
+      const userContent = pendingImageId
+        ? JSON.stringify({ type: 'image', fileId: pendingImageId, text: text || 'الرجاء تحليل هذه الصورة.' })
+        : text;
+
+      messages.push({
+        id: Date.now().toString(),
+        role: 'user',
+        content: userContent,
+      });
+
+      renderMessages();
+      input.value = '';
+
+      try {
+        const token = getToken();
+        const currentFileId = pendingImageId;
+        const res = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message: text,
+            chatId: chatId,
+            fileId: currentFileId,
+          }),
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            localStorage.setItem('redirect_after_login', '/ai.html');
+            window.location.href = '/login.html';
+            return;
+          }
+          throw new Error(`Server error: ${res.status}`);
+        }
+
+        const responseText = await res.text();
+        let assistantText = '';
+        let newChatId = chatId;
+
+        const lines = responseText.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              assistantText += JSON.parse(line.substring(2));
+            } catch {}
+          } else if (line.startsWith('2:')) {
+            try {
+              const data = JSON.parse(line.substring(2));
+              if (data && data[0] && data[0].chatId) {
+                newChatId = data[0].chatId;
+              }
+            } catch {}
+          }
+        }
+
+        if (!chatId && newChatId) {
+          chatId = newChatId;
+          loadChatList();
+        }
+
+        messages.push({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: assistantText || 'عذراً، لم أتمكن من معالجة طلبك. حاول مرة أخرى.',
+        });
+
+        clearPendingImage();
+      } catch (error) {
+        console.error('Chat error:', error);
+        messages.push({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى. 🔄',
+        });
+      } finally {
+        isLoading = false;
+        renderMessages();
+      }
+    }
+
+    function quickAction(prompt) {
+      const input = document.getElementById('messageInput');
+      input.value = prompt;
+      document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+    }
+
+    // ========== Image Upload ==========
+    async function handleFileSelected(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      await uploadImage(file);
+      e.target.value = '';
+    }
+
+    async function uploadImage(file) {
+      isImageUploading = true;
+      const previewUrl = URL.createObjectURL(file);
+      pendingPreviewUrl = previewUrl;
+
+      const preview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('previewImg');
+      const uploadingIndicator = document.getElementById('imageUploading');
+      preview.classList.remove('hidden');
+      previewImg.src = previewUrl;
+      uploadingIndicator.classList.remove('hidden');
+
+      try {
+        const token = getToken();
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const res = await fetch(`${API_BASE}/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (data.ok) {
+          pendingImageId = data.fileId;
+        } else {
+          throw new Error(data.error || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('فشل رفع الصورة. حاول مرة أخرى.');
+        clearPendingImage();
+      } finally {
+        isImageUploading = false;
+        uploadingIndicator.classList.add('hidden');
+      }
+    }
+
+    function clearPendingImage() {
+      pendingImageId = null;
+      if (pendingPreviewUrl) {
+        URL.revokeObjectURL(pendingPreviewUrl);
+        pendingPreviewUrl = null;
+      }
+      const preview = document.getElementById('imagePreview');
+      preview.classList.add('hidden');
+    }
+
+    // ========== Camera ==========
+    async function openCamera() {
+      const modal = document.getElementById('cameraModal');
+      modal.classList.remove('hidden');
+      capturedImageData = null;
+      document.getElementById('capturedPhoto').classList.add('hidden');
+      document.getElementById('cameraVideo').classList.remove('hidden');
+      document.getElementById('captureBtn').classList.remove('hidden');
+      document.getElementById('switchBtn').classList.remove('hidden');
+      document.getElementById('retakeBtn').classList.add('hidden');
+      document.getElementById('confirmBtn').classList.add('hidden');
+      await startCamera();
+    }
+
+    async function startCamera() {
+      const loading = document.getElementById('cameraLoading');
+      const error = document.getElementById('cameraError');
+      const video = document.getElementById('cameraVideo');
+      loading.classList.remove('hidden');
+      error.classList.add('hidden');
+      video.classList.remove('hidden');
+
+      try {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(t => t.stop());
+        }
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
+        video.srcObject = cameraStream;
+        await video.play();
+        loading.classList.add('hidden');
+      } catch (err) {
+        console.error('Camera error:', err);
+        loading.classList.add('hidden');
+        const errorMsg = document.getElementById('cameraErrorMsg');
+        if (err.name === 'NotAllowedError') {
+          errorMsg.textContent = 'لم يتم السماح بالوصول للكاميرا. الرجاء تفعيل الأذونات.';
+        } else if (err.name === 'NotFoundError') {
+          errorMsg.textContent = 'لم يتم العثور على كاميرا. تأكد من توصيل الكاميرا.';
+        } else {
+          errorMsg.textContent = 'حدث خطأ أثناء تشغيل الكاميرا.';
+        }
+        error.classList.remove('hidden');
+      }
+    }
+
+    function closeCamera(e) {
+      if (e && e.target !== document.getElementById('cameraModal')) return;
+      const modal = document.getElementById('cameraModal');
+      modal.classList.add('hidden');
+      stopCamera();
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+      const video = document.getElementById('cameraVideo');
+      if (video) video.srcObject = null;
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('cameraVideo');
+      const canvas = document.getElementById('cameraCanvas');
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+
+      capturedImageData = canvas.toDataURL('image/jpeg', 0.9);
+      const capturedImg = document.getElementById('capturedPhoto');
+      capturedImg.src = capturedImageData;
+      capturedImg.classList.remove('hidden');
+      video.classList.add('hidden');
+
+      document.getElementById('captureBtn').classList.add('hidden');
+      document.getElementById('switchBtn').classList.add('hidden');
+      document.getElementById('retakeBtn').classList.remove('hidden');
+      document.getElementById('confirmBtn').classList.remove('hidden');
+
+      stopCamera();
+    }
+
+    function retakePhoto() {
+      capturedImageData = null;
+      document.getElementById('capturedPhoto').classList.add('hidden');
+      document.getElementById('cameraVideo').classList.remove('hidden');
+      document.getElementById('captureBtn').classList.remove('hidden');
+      document.getElementById('switchBtn').classList.remove('hidden');
+      document.getElementById('retakeBtn').classList.add('hidden');
+      document.getElementById('confirmBtn').classList.add('hidden');
+      startCamera();
+    }
+
+    async function confirmPhoto() {
+      if (!capturedImageData) return;
+
+      try {
+        const blob = await fetch(capturedImageData).then(r => r.blob());
+        const file = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        await uploadImage(file);
+      } catch (error) {
+        console.error('Error processing camera photo:', error);
+      }
+
+      closeCamera();
+    }
+
+    function switchCamera() {
+      facingMode = facingMode === 'user' ? 'environment' : 'user';
+      startCamera();
+    }
+
+    // ========== Auth Check ==========
+    function checkAuth() {
+      const token = getToken();
+      if (!token) {
+        localStorage.setItem('redirect_after_login', window.location.pathname);
+        window.location.href = '/login.html';
+        return false;
+      }
+      return true;
+    }
+
+    // ========== Init ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!checkAuth()) return;
+
+      // Enter key to send
+      document.getElementById('messageInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+        }
+      });
+
+      loadChatList();
+    });
+  </script>
+</body>
+</html>

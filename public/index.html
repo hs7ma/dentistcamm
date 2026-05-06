@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إيكو كونترول - الزراعة الذكية</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts: Cairo (Best for Arabic) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Cairo', 'sans-serif'] },
+            colors: {
+              primary: '#059669', // Emerald 600
+              secondary: '#475569',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .glass {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      .hero-pattern {
+        background-image: radial-gradient(#059669 0.5px, transparent 0.5px);
+        background-size: 20px 20px;
+        opacity: 0.1;
+      }
+      .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .feature-card:hover {
+        transform: translateY(-8px);
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      @keyframes float-icon-1 {
+        0%, 100% { transform: translateY(0) rotate(12deg); }
+        50% { transform: translateY(-15px) rotate(12deg); }
+      }
+      @keyframes float-icon-2 {
+        0%, 100% { transform: translateY(0) rotate(-12deg); }
+        50% { transform: translateY(-15px) rotate(-12deg); }
+      }
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 15px rgba(5, 150, 105, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(5, 150, 105, 0.6); }
+      }
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
+      .animate-float-icon-1 {
+        animation: float-icon-1 7s ease-in-out infinite;
+      }
+      .animate-float-icon-2 {
+        animation: float-icon-2 8s ease-in-out infinite;
+      }
+      .animate-pulse-glow {
+        animation: pulse-glow 3s infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-800 font-sans">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-leaf text-xl"></i>
+            </div>
+            <span class="font-bold text-2xl tracking-tight text-emerald-900">إيكو كونترول</span>
+          </div>
+          <div class="hidden md:flex items-center gap-8">
+            <a href="/" class="text-base font-bold text-primary">الرئيسية</a>
+            <a href="/climate.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">التحكم بالمناخ</a>
+            <a href="/irrigation.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">نظام الري</a>
+            <a href="/inventory.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">المخزون</a>
+            <a href="/ai.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الذكاء الاصطناعي</a>
+            <a id="adminLink" href="/admin.html" class="hidden text-base font-medium text-slate-600 hover:text-primary transition-colors">الإدارة</a>
+          </div>
+          <button id="mobile-menu-btn" class="md:hidden text-slate-600 text-xl p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white/95 backdrop-blur-lg">
+        <div class="px-4 py-4 space-y-2">
+          <a href="/" class="block px-4 py-3 text-base font-bold text-primary bg-green-50 rounded-xl">الرئيسية</a>
+          <a href="/climate.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">التحكم بالمناخ</a>
+          <a href="/irrigation.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">نظام الري</a>
+          <a href="/inventory.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">المخزون</a>
+          <a href="/ai.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الذكاء الاصطناعي</a>
+          <a id="adminLinkMobile" href="/admin.html" class="hidden block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الإدارة</a>
+        </div>
+      </div>
+    </nav>
+    
+    <script>
+      // Mobile Menu Toggle
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+        const icon = mobileMenuBtn.querySelector('i');
+        if (mobileMenu.classList.contains('hidden')) {
+          icon.className = 'fa-solid fa-bars';
+        } else {
+          icon.className = 'fa-solid fa-xmark';
+        }
+      });
+
+      // Show admin link if user is admin
+      (function() {
+        const user = JSON.parse(localStorage.getItem('eco_user') || '{}');
+        if (user.role === 'admin') {
+          const adminLink = document.getElementById('adminLink');
+          const adminLinkMobile = document.getElementById('adminLinkMobile');
+          if (adminLink) adminLink.classList.remove('hidden');
+          if (adminLinkMobile) adminLinkMobile.classList.remove('hidden');
+        }
+      })();
+    </script>
+
+    <!-- Hero Section -->
+    <section class="pt-40 pb-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-green-50 via-emerald-50/50 to-white"></div>
+      <div class="absolute inset-0 hero-pattern"></div>
+      
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        <!-- نص المؤسسات -->
+        <div class="mb-6 md:mb-8">
+          <p class="text-lg md:text-xl font-semibold text-slate-700 tracking-wide">
+            الجامعة التقنية الشمالية - الكلية التقنية الزراعية / الموصل
+          </p>
+        </div>
+        <!-- شعارات الجامعة والكلية -->
+        <div class="flex items-center justify-center gap-6 md:gap-10 mb-8">
+          <div class="group">
+            <img src="images/IMG_٢٠٢٥١٢٠١_٠١٠٤٠١.png" alt="شعار الجامعة التقنية الشمالية" class="w-20 h-20 md:w-28 md:h-28 object-cover rounded-full shadow-lg transition-transform group-hover:scale-110 ring-4 ring-white">
+          </div>
+          <div class="h-16 md:h-20 w-px bg-gradient-to-b from-transparent via-emerald-400 to-transparent"></div>
+          <div class="group">
+            <img src="images/IMG_٢٠٢٥١٢٠١_٠١٠٠١٨.png" alt="شعار الكلية التقنية الزراعية - الموصل" class="w-20 h-20 md:w-28 md:h-28 object-cover rounded-full shadow-lg transition-transform group-hover:scale-110 ring-4 ring-white">
+          </div>
+        </div>
+
+        <!-- رئيسة الجامعة -->
+        <div class="mb-10">
+          <div class="flex flex-col items-center gap-3">
+            <p class="text-sm md:text-base font-semibold text-emerald-700">تحت رعاية</p>
+            <div class="p-1 bg-gradient-to-br from-green-600 via-emerald-500 to-teal-600 rounded-full">
+              <img src="images/pus.jpg" alt="البروفيسور علياء عباس العطار" class="w-48 h-48 md:w-64 md:h-64 object-cover rounded-full border-4 border-white">
+            </div>
+            <div class="text-center">
+              <h3 class="text-lg md:text-xl font-bold text-slate-800">البروفيسور علياء عباس العطار</h3>
+              <p class="text-sm md:text-base text-slate-600 font-medium">رئيسة الجامعة التقنية الشمالية</p>
+            </div>
+          </div>
+        </div>
+
+        <h1 class="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-tight">
+          مستقبل <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500">أتمتة الدفيئات</span><br>
+          بين يديك
+        </h1>
+        
+        <div class="relative inline-block max-w-3xl mx-auto mb-12 pt-4">
+          <!-- Decorative Blur Background -->
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-emerald-100/40 blur-2xl rounded-full -z-10"></div>
+
+          <!-- Floating Icon 1: AI/Robot -->
+          <div class="absolute -top-2 -right-2 md:-top-6 md:-right-12 animate-float-icon-1 hidden sm:block">
+            <div class="w-12 h-12 md:w-14 md:h-14 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/70 flex items-center justify-center text-emerald-600 ring-2 ring-emerald-50/50">
+              <i class="fa-solid fa-robot text-xl md:text-2xl bg-gradient-to-br from-emerald-600 to-teal-700 bg-clip-text text-transparent"></i>
+            </div>
+          </div>
+          
+          <!-- Floating Icon 2: Chip/Tech -->
+          <div class="absolute -bottom-2 -left-2 md:-bottom-4 md:-left-12 animate-float-icon-2 hidden sm:block">
+            <div class="w-12 h-12 md:w-14 md:h-14 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/70 flex items-center justify-center text-blue-600 ring-2 ring-blue-50/50">
+              <i class="fa-solid fa-microchip text-xl md:text-2xl bg-gradient-to-br from-blue-600 to-indigo-700 bg-clip-text text-transparent"></i>
+            </div>
+          </div>
+
+          <!-- Main Text Card -->
+          <div class="relative z-10 animate-float">
+             <div class="bg-white/60 backdrop-blur-sm border border-white/60 rounded-full px-6 py-3 md:px-8 md:py-4 shadow-lg shadow-emerald-900/5 ring-1 ring-white/70">
+              <p class="text-lg md:text-xl text-slate-700 font-semibold text-center flex items-center justify-center gap-2">
+                <span>زراعة حديثة</span>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 font-bold">مدعومة بالذكاء الاصطناعي وتقنيات انترنت الاشياء</span>
+                <i class="fa-solid fa-wand-magic-sparkles text-yellow-400 text-lg"></i>
+              </p>
+             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl font-bold text-slate-900 mb-4">عن النظام</h2>
+          <div class="w-24 h-1.5 bg-gradient-to-r from-green-500 to-emerald-500 mx-auto rounded-full"></div>
+        </div>
+        
+        <div class="max-w-4xl mx-auto text-center">
+          <p class="text-xl text-slate-600 leading-loose mb-8">
+            إيكو كونترول هو نظام متطور لإدارة الدفيئات مبني على متحكمات ESP32 وتقنيات الويب الحديثة. 
+            يوفر النظام مراقبة فورية وأتمتة ذكية للبيئات الزراعية، مما يساعد المزارعين والهواة 
+            على تحقيق أفضل ظروف النمو مع تقليل هدر الموارد.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 bg-stone-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl font-bold text-slate-900 mb-4">المميزات الرئيسية</h2>
+          <p class="text-slate-500 text-xl">إمكانيات قوية مصممة للزراعة الحديثة</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          
+          <!-- Feature 1: التحكم بالمناخ -->
+          <div class="feature-card bg-white rounded-3xl p-8 border border-slate-200 shadow-lg">
+            <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-500/25">
+              <i class="fa-solid fa-temperature-half text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-slate-900">التحكم بالمناخ</h3>
+            <p class="text-slate-600 leading-relaxed">
+              حدد درجة الحرارة والرطوبة المستهدفة ودع النظام يتحكم تلقائياً بالمروحة والسخان والباب للوصول للقيم المطلوبة.
+            </p>
+          </div>
+
+          <!-- Feature 2: الري الذكي -->
+          <div class="feature-card bg-white rounded-3xl p-8 border border-slate-200 shadow-lg">
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-green-500/25">
+              <i class="fa-solid fa-droplet text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-slate-900">الري الذكي</h3>
+            <p class="text-slate-600 leading-relaxed">
+              أوضاع ري متعددة: كمي (باللتر)، وقتي (بالدقائق)، وذكي (بناءً على رطوبة التربة) مع جدولة متقدمة.
+            </p>
+          </div>
+
+          <!-- Feature 3: الذكاء الاصطناعي -->
+          <div class="feature-card bg-white rounded-3xl p-8 border border-slate-200 shadow-lg">
+            <div class="w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-teal-500/25">
+              <i class="fa-solid fa-brain text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-slate-900">الذكاء الاصطناعي</h3>
+            <p class="text-slate-600 leading-relaxed">
+              مساعد ذكي يقدم توصيات زراعية، تشخيص أمراض النباتات، ونصائح لتحسين الإنتاج.
+            </p>
+          </div>
+
+          <!-- Feature 4: إدارة المخزون -->
+          <div class="feature-card bg-white rounded-3xl p-8 border border-slate-200 shadow-lg">
+            <div class="w-14 h-14 bg-gradient-to-br from-emerald-600 to-green-700 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-500/25">
+              <i class="fa-solid fa-boxes-stacked text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-slate-900">إدارة المخزون</h3>
+            <p class="text-slate-600 leading-relaxed">
+              تتبع النباتات والأسمدة والمستلزمات الزراعية مع خريطة تفاعلية للأحواض داخل الدفيئة.
+            </p>
+          </div>
+
+          <!-- Feature 5: بيانات فورية -->
+          <div class="feature-card bg-white rounded-3xl p-8 border border-slate-200 shadow-lg">
+            <div class="w-14 h-14 bg-gradient-to-br from-green-600 to-teal-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-green-500/25">
+              <i class="fa-solid fa-chart-line text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-slate-900">بيانات فورية</h3>
+            <p class="text-slate-600 leading-relaxed">
+              قراءات حية للحساسات ومراقبة تدفق المياه واستهلاكها الكلي مع تحديث تلقائي للبيانات.
+            </p>
+          </div>
+
+          <!-- Feature 6: تصميم متجاوب -->
+          <div class="feature-card bg-white rounded-3xl p-8 border border-slate-200 shadow-lg">
+            <div class="w-14 h-14 bg-gradient-to-br from-teal-600 to-green-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-teal-500/25">
+              <i class="fa-solid fa-mobile-screen-button text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-slate-900">تصميم متجاوب</h3>
+            <p class="text-slate-600 leading-relaxed">
+              واجهة عصرية وجميلة تعمل بسلاسة على جميع الأجهزة: الحاسوب، التابلت، والجوال.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 bg-gradient-to-br from-green-600 to-emerald-700 relative overflow-hidden">
+      <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <h2 class="text-4xl md:text-5xl font-bold text-white mb-8">جاهز للبدء؟</h2>
+        <p class="text-xl text-green-50 font-medium">
+          ادخل إلى لوحة التحكم وابدأ في تحسين بيئة الزراعة الخاصة بك اليوم.
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-12">
+      <div class="max-w-7xl mx-auto px-4 text-center">
+        <!-- شعارات المؤسسات -->
+        <div class="flex items-center justify-center gap-6 mb-8">
+          <img src="images/IMG_٢٠٢٥١٢٠١_٠١٠٤٠١.png" alt="شعار الجامعة التقنية الشمالية" class="w-14 h-14 object-cover rounded-full opacity-90 hover:opacity-100 transition-opacity ring-2 ring-slate-700">
+          <img src="images/IMG_٢٠٢٥١٢٠١_٠١٠٠١٨.png" alt="شعار الكلية التقنية الزراعية - الموصل" class="w-14 h-14 object-cover rounded-full opacity-90 hover:opacity-100 transition-opacity ring-2 ring-slate-700">
+        </div>
+        <p class="text-sm text-slate-500 mb-6">الجامعة التقنية الشمالية - الكلية التقنية الزراعية / الموصل</p>
+        
+        <div class="flex items-center justify-center gap-3 mb-6 text-white">
+          <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fa-solid fa-leaf"></i>
+          </div>
+          <span class="font-bold text-2xl">إيكو كونترول</span>
+        </div>
+        <p class="text-base mb-6 text-slate-400">نظام إدارة الدفيئات الزراعية الذكي</p>
+        
+        <!-- Developer Credit -->
+        <div class="border-t border-slate-800 pt-6 mt-6">
+          <p class="text-sm text-slate-500 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-code text-emerald-500"></i>
+            تم التطوير من قبل <span class="text-emerald-400 font-bold">شركة المسار الذهبي</span> / <span class="text-white font-medium">م. حسام محمد</span>
+          </p>
+        </div>
+        
+        <p class="text-sm text-slate-600 font-mono mt-4" dir="ltr">© 2025 EcoControl. Built with Love & Green Technology.</p>
+      </div>
+    </footer>
+
+  </body>
+</html>

@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام الري - إيكو كونترول</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Cairo', 'sans-serif'] },
+            colors: {
+              primary: '#059669', // Emerald 600
+              secondary: '#475569',
+              success: '#059669',
+              danger: '#dc2626',
+              warning: '#d97706',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #f1f5f9; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      .glass {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
+      .fade-in { animation: fadeIn 0.5s ease-in-out; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .pulse-ring {
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse-ring {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      /* Card Hover Effects */
+      .unit-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .unit-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-800 font-sans min-h-screen selection:bg-primary selection:text-white">
+    
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-leaf text-xl"></i>
+            </div>
+            <span class="font-bold text-2xl tracking-tight text-emerald-900">إيكو كونترول</span>
+          </div>
+          <div class="hidden md:flex items-center gap-8">
+            <a href="/" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الرئيسية</a>
+            <a href="/climate.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">التحكم بالمناخ</a>
+            <a href="/irrigation.html" class="text-base font-bold text-primary">نظام الري</a>
+            <a href="/inventory.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">المخزون</a>
+            <a href="/ai.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الذكاء الاصطناعي</a>
+            <a id="adminLink" href="/admin.html" class="hidden text-base font-medium text-slate-600 hover:text-primary transition-colors">الإدارة</a>
+          </div>
+          <button id="mobile-menu-btn" class="md:hidden text-slate-600 text-xl p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white/95 backdrop-blur-lg">
+        <div class="px-4 py-4 space-y-2">
+          <a href="/" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الرئيسية</a>
+          <a href="/climate.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">التحكم بالمناخ</a>
+          <a href="/irrigation.html" class="block px-4 py-3 text-base font-bold text-primary bg-green-50 rounded-xl">نظام الري</a>
+          <a href="/inventory.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">المخزون</a>
+          <a href="/ai.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الذكاء الاصطناعي</a>
+          <a id="adminLinkMobile" href="/admin.html" class="hidden block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الإدارة</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-28 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      
+      <!-- Header Section -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in">
+        <div>
+          <h1 class="text-3xl font-bold text-emerald-900 mb-2">نظام الري الذكي</h1>
+          <p class="text-slate-500 font-medium">إدارة مركزية لوحدات الري والأحواض الزراعية.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <!-- Back Button (Hidden by default) -->
+          <button id="back-to-dashboard-btn" class="hidden px-5 py-3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-arrow-right"></i>
+            عودة للقائمة
+          </button>
+
+          <button id="add-unit-btn" class="px-5 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i>
+            <span class="hidden sm:inline">إضافة وحدة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW 1: DASHBOARD GRID (Default) -->
+      <div id="dashboard-view" class="fade-in space-y-6">
+        
+        <!-- ⭐ بطاقة المضخة المركزية -->
+        <div id="central-pump-card" class="bg-gradient-to-br from-blue-600 to-cyan-600 rounded-3xl p-6 text-white shadow-xl shadow-blue-500/25">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <i id="central-pump-icon" class="fa-solid fa-water text-3xl"></i>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-blue-100 uppercase tracking-wider mb-1">المضخة المركزية</p>
+                <h2 class="text-2xl font-bold">مضخة واحدة لجميع الأحواض</h2>
+                <p class="text-sm text-blue-100 mt-1">
+                  <i class="fa-solid fa-microchip ml-1"></i>
+                  متصلة على الوحدة: <span class="font-bold">plant-bed-04</span>
+                </p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div id="central-pump-status" class="text-center px-6 py-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                <p class="text-xs text-blue-100 mb-1">الحالة</p>
+                <p id="central-pump-state" class="text-lg font-bold">متوقفة</p>
+              </div>
+              <div id="central-pump-units" class="text-center px-6 py-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                <p class="text-xs text-blue-100 mb-1">وحدات تطلب التشغيل</p>
+                <p id="requesting-units-count" class="text-lg font-bold">0</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- قائمة الوحدات التي تطلب المضخة -->
+          <div id="requesting-units-list" class="hidden mt-4 pt-4 border-t border-white/20">
+            <p class="text-sm text-blue-100 mb-2">الوحدات النشطة:</p>
+            <div id="requesting-units-badges" class="flex flex-wrap gap-2">
+              <!-- يتم ملؤها ديناميكياً -->
+            </div>
+          </div>
+        </div>
+
+        <div id="units-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <!-- البطاقات سيتم توليدها هنا -->
+          <div class="col-span-full text-center py-12">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-emerald-500 mb-4"></i>
+            <p class="text-slate-500 font-bold">جاري تحميل الوحدات...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: DETAILED UNIT VIEW (Hidden by default) -->
+      <div id="unit-details-view" class="hidden space-y-8 fade-in">
+        
+        <!-- Selected Unit Title Bar -->
+        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+           <div class="flex items-center gap-3">
+             <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+               <i class="fa-solid fa-microchip text-xl"></i>
+             </div>
+             <div>
+               <p class="text-xs text-emerald-600 font-bold uppercase tracking-wider">الوحدة المحددة</p>
+               <h2 id="selected-unit-title" class="text-xl font-bold text-emerald-900">--</h2>
+             </div>
+           </div>
+           <span id="connection-status" class="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> غير متصل
+           </span>
+        </div>
+
+        <!-- Alert for disconnection -->
+        <div id="disconnection-alert" class="hidden fade-in">
+          <div class="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-sm">
+            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            <div>
+              <p class="font-bold">انقطع الاتصال</p>
+              <p class="text-sm opacity-90">لا يمكن الوصول إلى وحدة الري. جاري محاولة الاتصال...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <section id="metrics-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <!-- Soil Moisture -->
+          <div class="card glass rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+            <div class="absolute top-0 left-0 p-4 sm:p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+              <i class="fa-solid fa-seedling text-5xl sm:text-7xl text-amber-600"></i>
+            </div>
+            <div class="relative z-10">
+              <p class="text-xs sm:text-sm font-bold text-amber-600 uppercase tracking-wider mb-1">رطوبة التربة</p>
+              <div class="flex items-baseline gap-2" dir="ltr">
+                <h2 id="soil-moisture" class="text-4xl sm:text-5xl font-bold text-slate-800">--</h2>
+                <span class="text-xl sm:text-2xl text-slate-400">%</span>
+              </div>
+            </div>
+            <div class="mt-4 sm:mt-6 h-2 w-full bg-amber-50 rounded-full overflow-hidden">
+              <div id="soil-moisture-bar" class="h-full bg-amber-500 w-0 rounded-full transition-all duration-500"></div>
+            </div>
+          </div>
+
+          <!-- Flow Rate -->
+          <div class="card glass rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+            <div class="absolute top-0 left-0 p-4 sm:p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+              <i class="fa-solid fa-gauge-high text-5xl sm:text-7xl text-cyan-600"></i>
+            </div>
+            <div class="relative z-10">
+              <p class="text-xs sm:text-sm font-bold text-cyan-600 uppercase tracking-wider mb-1">معدل التدفق</p>
+              <div class="flex items-baseline gap-2" dir="ltr">
+                <h2 id="flow-rate" class="text-3xl sm:text-4xl font-bold text-slate-800">--</h2>
+                <span class="text-base sm:text-lg text-slate-400">L/min</span>
+              </div>
+            </div>
+            <div class="mt-4 sm:mt-6 flex items-center gap-2 text-xs text-slate-500">
+              <i class="fa-solid fa-clock"></i>
+              <span id="flow-updated">جاري الانتظار...</span>
+            </div>
+          </div>
+
+          <!-- Total Water -->
+          <div class="card glass rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+            <div class="absolute top-0 left-0 p-4 sm:p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+              <i class="fa-solid fa-droplet text-5xl sm:text-7xl text-blue-600"></i>
+            </div>
+            <div class="relative z-10">
+              <p class="text-xs sm:text-sm font-bold text-blue-600 uppercase tracking-wider mb-1">إجمالي المياه</p>
+              <div class="flex items-baseline gap-2" dir="ltr">
+                <h2 id="total-water" class="text-3xl sm:text-4xl font-bold text-slate-800">--</h2>
+                <span class="text-base sm:text-lg text-slate-400">L</span>
+              </div>
+            </div>
+            <div class="mt-4 sm:mt-6">
+              <button id="reset-water-btn" class="text-xs font-bold text-blue-600 hover:text-blue-700 underline transition-colors">
+                إعادة تعيين العداد
+              </button>
+            </div>
+          </div>
+
+          <!-- Irrigation Status -->
+          <div class="card glass rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+            <div class="absolute top-0 left-0 p-4 sm:p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+              <i class="fa-solid fa-circle-info text-5xl sm:text-7xl text-emerald-600"></i>
+            </div>
+            <div class="relative z-10">
+              <p class="text-xs sm:text-sm font-bold text-emerald-600 uppercase tracking-wider mb-2 sm:mb-3">حالة الري</p>
+              <div class="space-y-2 sm:space-y-3">
+                <div id="irrigation-status" class="flex items-center gap-2 sm:gap-3">
+                  <span class="w-3 h-3 rounded-full bg-slate-300"></span>
+                  <span class="text-sm font-bold text-slate-600">متوقف</span>
+                </div>
+                <div class="text-xs text-slate-500">
+                  <span class="font-bold">الوضع: </span>
+                  <span id="current-mode" class="font-mono">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Control Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Irrigation Mode Card -->
+          <div class="card glass rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold text-slate-900">وضع الري</h2>
+              <span class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">اختر الوضع</span>
+            </div>
+
+            <div class="space-y-4 mb-8">
+              <!-- Off Mode -->
+              <label class="flex items-start gap-4 p-5 bg-slate-50/50 rounded-2xl border-2 border-slate-200 cursor-pointer hover:border-primary/50 transition-all group">
+                <input type="radio" name="irrigation-mode" value="off" class="mt-1 w-5 h-5 text-primary focus:ring-primary">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-power-off text-slate-600"></i>
+                    <span class="font-bold text-slate-800">إيقاف (Off)</span>
+                  </div>
+                  <p class="text-sm text-slate-600">إيقاف الري بالكامل</p>
+                </div>
+              </label>
+
+              <!-- Quantitative Mode -->
+              <label class="flex items-start gap-4 p-5 bg-slate-50/50 rounded-2xl border-2 border-slate-200 cursor-pointer hover:border-primary/50 transition-all group">
+                <input type="radio" name="irrigation-mode" value="quantitative" class="mt-1 w-5 h-5 text-primary focus:ring-primary">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-flask text-blue-600"></i>
+                    <span class="font-bold text-slate-800">كمي (Quantitative)</span>
+                  </div>
+                  <p class="text-sm text-slate-600">ري بكمية محددة من الماء (باللتر)</p>
+                </div>
+              </label>
+
+              <!-- Temporal Mode -->
+              <label class="flex items-start gap-4 p-5 bg-slate-50/50 rounded-2xl border-2 border-slate-200 cursor-pointer hover:border-primary/50 transition-all group">
+                <input type="radio" name="irrigation-mode" value="temporal" class="mt-1 w-5 h-5 text-primary focus:ring-primary">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-clock text-purple-600"></i>
+                    <span class="font-bold text-slate-800">وقتي (Temporal)</span>
+                  </div>
+                  <p class="text-sm text-slate-600">ري لمدة زمنية محددة (بالدقائق)</p>
+                </div>
+              </label>
+
+              <!-- Moisture Mode -->
+              <label class="flex items-start gap-4 p-5 bg-slate-50/50 rounded-2xl border-2 border-slate-200 cursor-pointer hover:border-primary/50 transition-all group">
+                <input type="radio" name="irrigation-mode" value="moisture" class="mt-1 w-5 h-5 text-primary focus:ring-primary">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-brain text-emerald-600"></i>
+                    <span class="font-bold text-slate-800">ذكي (Smart Moisture)</span>
+                  </div>
+                  <p class="text-sm text-slate-600">ري تلقائي بناءً على رطوبة التربة</p>
+                </div>
+              </label>
+
+              <!-- Manual Mode -->
+              <label class="flex items-start gap-4 p-5 bg-slate-50/50 rounded-2xl border-2 border-slate-200 cursor-pointer hover:border-primary/50 transition-all group">
+                <input type="radio" name="irrigation-mode" value="manual" class="mt-1 w-5 h-5 text-primary focus:ring-primary">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-hand text-amber-600"></i>
+                    <span class="font-bold text-slate-800">يدوي (Manual)</span>
+                  </div>
+                  <p class="text-sm text-slate-600">تحكم يدوي - زر واحد يفتح القفل ويشغل المضخة معاً</p>
+                </div>
+              </label>
+            </div>
+
+            <!-- Dynamic Inputs -->
+            <div id="mode-inputs" class="space-y-4 mb-6">
+              <!-- JS Populated -->
+            </div>
+
+            <button id="apply-mode-btn" class="w-full py-3.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-check"></i>
+              تطبيق الوضع
+            </button>
+          </div>
+
+          <!-- Manual Control Card -->
+          <div id="manual-control-card" class="card glass rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold text-slate-900">التحكم اليدوي</h2>
+              <span id="manual-status-badge" class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">معطل</span>
+            </div>
+
+            <!-- Warning when not in manual mode -->
+            <div id="manual-disabled-warning" class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+              <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xl mt-0.5"></i>
+              <div>
+                <p class="text-sm font-bold text-amber-800 mb-1">التحكم اليدوي معطل</p>
+                <p class="text-xs text-amber-700">للتحكم في المضخة والقفل، اختر وضع "يدوي (Manual)" من القائمة المجاورة.</p>
+              </div>
+            </div>
+
+            <div id="manual-controls-container" class="space-y-6">
+              <!-- ⭐ زر واحد للتحكم - يفتح القفل ويشغل المضخة معاً -->
+              <div class="p-6 bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 rounded-2xl border-2 border-blue-200">
+                <div class="flex items-center justify-between mb-6">
+                  <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                      <i class="fa-solid fa-power-off text-2xl"></i>
+                    </div>
+                    <div>
+                      <h3 class="font-bold text-slate-800 text-lg">التحكم في الري</h3>
+                      <p class="text-xs text-slate-600 mt-1">
+                        <span id="irrigation-control-status">متوقف - جاهز للتشغيل</span>
+                      </p>
+                      <p class="text-xs text-emerald-700 font-bold mt-1">
+                        <i class="fa-solid fa-shield-halved ml-1"></i>
+                        آمن: يفتح القفل أولاً ثم يشغل المضخة
+                      </p>
+                    </div>
+                  </div>
+                  <div id="irrigation-indicator" class="w-4 h-4 rounded-full bg-slate-300"></div>
+                </div>
+                
+                <!-- زر واحد ديناميكي -->
+                <button id="irrigation-toggle-btn" class="w-full py-4 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-slate-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3">
+                  <i class="fa-solid fa-power-off text-xl"></i>
+                  <span id="irrigation-toggle-text">تشغيل</span>
+                </button>
+              </div>
+
+              <!-- Emergency Stop -->
+              <button id="emergency-stop-btn" class="w-full py-4 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white rounded-xl font-bold shadow-lg shadow-rose-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 border-2 border-rose-700">
+                <i class="fa-solid fa-circle-stop text-2xl"></i>
+                <span class="text-lg">إيقاف طارئ</span>
+              </button>
+            </div>
+          </div>
+
+        </section>
+      </div>
+      <!-- END VIEW 2 -->
+
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 left-6 z-50 flex flex-col gap-3" dir="rtl"></div>
+
+    <footer class="border-t border-slate-200 bg-white/50 py-8 mt-12">
+      <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm font-medium">
+        <p>© 2025 إيكو كونترول. نظام الري الذكي.</p>
+      </div>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+      // === State & Elements ===
+      let CURRENT_UNIT_ID = null;
+      let unitsList = [];
+      let isUserEditingMode = false;
+      let currentView = 'dashboard'; // 'dashboard' or 'details'
+
+      // Navigation Elements
+      const dashboardView = document.getElementById('dashboard-view');
+      const unitDetailsView = document.getElementById('unit-details-view');
+      const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
+      const unitsGrid = document.getElementById('units-grid');
+      const addUnitBtn = document.getElementById('add-unit-btn');
+      const selectedUnitTitle = document.getElementById('selected-unit-title');
+
+      // Detail Elements
+      const disconnectionAlert = document.getElementById('disconnection-alert');
+      const connectionStatus = document.getElementById('connection-status');
+
+      const soilMoistureEl = document.getElementById('soil-moisture');
+      const soilMoistureBar = document.getElementById('soil-moisture-bar');
+      const flowRateEl = document.getElementById('flow-rate');
+      const totalWaterEl = document.getElementById('total-water');
+      const irrigationStatusEl = document.getElementById('irrigation-status');
+      const currentModeEl = document.getElementById('current-mode');
+      const flowUpdatedEl = document.getElementById('flow-updated');
+
+      const modeInputsContainer = document.getElementById('mode-inputs');
+      const applyModeBtn = document.getElementById('apply-mode-btn');
+      const irrigationToggleBtn = document.getElementById('irrigation-toggle-btn');
+      const emergencyStopBtn = document.getElementById('emergency-stop-btn');
+      const resetWaterBtn = document.getElementById('reset-water-btn');
+
+      const irrigationIndicator = document.getElementById('irrigation-indicator');
+      const irrigationStatusText = document.getElementById('irrigation-control-status');
+      const irrigationToggleText = document.getElementById('irrigation-toggle-text');
+
+      // === Utils ===
+      function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        
+        const colors = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-blue-600');
+        const icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-info');
+
+        toast.className = `${colors} text-white px-6 py-4 rounded-2xl shadow-lg shadow-gray-900/10 flex items-center gap-4 min-w-[300px] transform transition-all duration-300 translate-y-10 opacity-0`;
+        toast.innerHTML = `
+          <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid ${icon} text-sm"></i>
+          </div>
+          <span class="text-base font-bold">${message}</span>
+        `;
+
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
+        setTimeout(() => {
+          toast.classList.add('opacity-0', '-translate-x-full');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      function formatNumber(value) {
+        if (value === null || value === undefined || Number.isNaN(value)) return '--';
+        return Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 });
+      }
+
+      function formatTimestamp(ts) {
+        if (!ts) return 'أبدًا';
+        return new Date(ts).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+
+      // === Navigation Logic ===
+      function switchView(viewName) {
+        currentView = viewName;
+        if (viewName === 'dashboard') {
+          dashboardView.classList.remove('hidden');
+          unitDetailsView.classList.add('hidden');
+          backToDashboardBtn.classList.add('hidden');
+          addUnitBtn.classList.remove('hidden');
+          CURRENT_UNIT_ID = null; // Clear selection
+          fetchUnitsList(); // Refresh list immediately
+        } else if (viewName === 'details') {
+          dashboardView.classList.add('hidden');
+          unitDetailsView.classList.remove('hidden');
+          backToDashboardBtn.classList.remove('hidden');
+          addUnitBtn.classList.add('hidden');
+          // Refresh status immediately for selected unit
+          fetchUnitStatus();
+        }
+      }
+
+      backToDashboardBtn.addEventListener('click', () => switchView('dashboard'));
+
+      // === Dashboard Logic: Fetch & Render Cards ===
+      async function fetchUnitsList() {
+        try {
+          const res = await fetch('/api/units');
+          if (!res.ok) throw new Error('Failed to fetch units');
+          const data = await res.json();
+          const units = data.units || [];
+          unitsList = units.map(unit => unit.unitId);
+          
+          // تحديث بطاقة المضخة المركزية
+          if (data.centralPump) {
+            updateCentralPumpCard(data.centralPump);
+          }
+          
+          renderDashboardCards(units);
+        } catch (err) {
+          console.error('Error fetching units:', err);
+          unitsGrid.innerHTML = `
+            <div class="col-span-full bg-rose-50 p-6 rounded-2xl border border-rose-100 text-center text-rose-600">
+              <i class="fa-solid fa-circle-exclamation text-2xl mb-2"></i>
+              <p class="font-bold">فشل الاتصال بالخادم</p>
+            </div>
+          `;
+        }
+      }
+
+      // ⭐ تحديث بطاقة المضخة المركزية
+      function updateCentralPumpCard(pumpData) {
+        const pumpCard = document.getElementById('central-pump-card');
+        const pumpIcon = document.getElementById('central-pump-icon');
+        const pumpState = document.getElementById('central-pump-state');
+        const requestingCount = document.getElementById('requesting-units-count');
+        const requestingList = document.getElementById('requesting-units-list');
+        const requestingBadges = document.getElementById('requesting-units-badges');
+
+        if (pumpData.active) {
+          pumpCard.className = 'bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/25';
+          pumpIcon.className = 'fa-solid fa-water text-3xl fa-beat';
+          pumpState.textContent = '🔄 تعمل';
+        } else {
+          pumpCard.className = 'bg-gradient-to-br from-slate-500 to-slate-600 rounded-3xl p-6 text-white shadow-xl shadow-slate-500/25';
+          pumpIcon.className = 'fa-solid fa-water text-3xl';
+          pumpState.textContent = 'متوقفة';
+        }
+
+        const count = pumpData.requestingUnits?.length || 0;
+        requestingCount.textContent = count;
+
+        if (count > 0) {
+          requestingList.classList.remove('hidden');
+          requestingBadges.innerHTML = pumpData.requestingUnits.map(unitId => `
+            <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-bold">${unitId}</span>
+          `).join('');
+        } else {
+          requestingList.classList.add('hidden');
+        }
+      }
+
+      function renderDashboardCards(units) {
+        if (units.length === 0) {
+          unitsGrid.innerHTML = `
+            <div class="col-span-full bg-slate-50 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+              <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                <i class="fa-solid fa-seedling text-2xl"></i>
+              </div>
+              <h3 class="text-lg font-bold text-slate-700">لا توجد وحدات مضافة</h3>
+              <p class="text-slate-500 mb-4">أضف وحدتك الأولى للبدء في التحكم</p>
+            </div>
+          `;
+          return;
+        }
+
+        unitsGrid.innerHTML = units.map(unit => {
+          const isConnected = unit.connected;
+          const moisture = unit.soilMoisture || 0;
+          const isIrrigating = unit.irrigationActive;
+          const hasCentralPump = unit.hasCentralPump;
+          
+          return `
+            <div onclick="selectUnit('${unit.unitId}')" class="unit-card bg-white rounded-3xl p-6 border ${hasCentralPump ? 'border-blue-200 ring-2 ring-blue-100' : 'border-slate-100'} shadow-sm cursor-pointer relative overflow-hidden group">
+              <!-- Status Dot -->
+              <div class="absolute top-6 left-6 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-400'}"></span>
+                <span class="text-xs font-bold ${isConnected ? 'text-emerald-600' : 'text-rose-500'}">
+                  ${isConnected ? 'متصل' : 'غير متصل'}
+                </span>
+              </div>
+
+              <!-- Central Pump Badge -->
+              ${hasCentralPump ? `
+                <div class="absolute top-6 right-6">
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full flex items-center gap-1">
+                    <i class="fa-solid fa-water"></i>
+                    المضخة
+                  </span>
+                </div>
+              ` : ''}
+
+              <!-- Icon & Title -->
+              <div class="flex items-center gap-4 mb-6 ${hasCentralPump ? 'mt-4' : ''}">
+                <div class="w-14 h-14 rounded-2xl ${isIrrigating ? 'bg-blue-500 text-white shadow-blue-200' : (hasCentralPump ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500')} flex items-center justify-center text-2xl shadow-lg transition-colors">
+                  <i class="fa-solid ${isIrrigating ? 'fa-droplet fa-bounce' : (hasCentralPump ? 'fa-water' : 'fa-leaf')}"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-800">${unit.unitId}</h3>
+                  <p class="text-xs text-slate-500 font-bold">${isIrrigating ? 'جاري الري الآن...' : (hasCentralPump ? 'وحدة المضخة المركزية' : 'واقفة')}</p>
+                </div>
+              </div>
+
+              <!-- Mini Metrics -->
+              <div class="space-y-3">
+                <div>
+                  <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                    <span>رطوبة التربة</span>
+                    <span class="text-slate-800">${Math.round(moisture)}%</span>
+                  </div>
+                  <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full ${moisture < 30 ? 'bg-rose-400' : 'bg-emerald-500'} rounded-full transition-all duration-500" style="width: ${moisture}%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Hint -->
+              <div class="mt-6 flex items-center justify-end text-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                التحكم والتفاصيل <i class="fa-solid fa-arrow-left mr-1"></i>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Global function to be accessible from HTML onClick
+      window.selectUnit = function(id) {
+        CURRENT_UNIT_ID = id;
+        selectedUnitTitle.textContent = id;
+        isUserEditingMode = false;
+        switchView('details');
+      };
+
+      addUnitBtn.addEventListener('click', () => {
+        const newId = prompt('أدخل معرف الوحدة الجديدة (مثال: plant-bed-02):');
+        if (newId && newId.trim()) {
+          const id = newId.trim();
+          // Only "simulate" adding for now as backend discovers units automatically usually
+          // But for UX, we'll assume we want to jump to it
+          showToast(`جاري البحث عن الوحدة: ${id}`);
+          // Force refresh
+          setTimeout(() => fetchUnitsList(), 1000);
+        }
+      });
+
+      // === Detail View Logic (Preserved from Original) ===
+      async function fetchUnitStatus() {
+        if (!CURRENT_UNIT_ID || currentView !== 'details') return;
+
+        try {
+          const res = await fetch(`/api/units/${encodeURIComponent(CURRENT_UNIT_ID)}/status`);
+          if (!res.ok) throw new Error('Unit not found');
+          const data = await res.json();
+
+          updateSensorDisplay(data.unit.sensorData, data.unit.control);
+          updateControlDisplay(data.unit.control, data.unit.settings, data.unit.sensorData);
+        } catch (err) {
+          console.error('Error fetching unit status:', err);
+          showConnectionError();
+        }
+      }
+
+      function updateSensorDisplay(sensor, control) {
+        const connected = sensor?.connected ?? false;
+
+        soilMoistureEl.textContent = formatNumber(sensor?.soilMoisture);
+        soilMoistureBar.style.width = `${sensor?.soilMoisture || 0}%`;
+
+        flowRateEl.textContent = formatNumber(sensor?.waterFlow);
+        totalWaterEl.textContent = formatNumber(sensor?.totalWaterConsumed);
+
+        // التحقق من حالة الري من بيانات ESP32 الفعلية
+        const isIrrigating = sensor?.irrigationActive ?? false;
+        if (isIrrigating) {
+          irrigationStatusEl.innerHTML = '<span class="w-3 h-3 rounded-full bg-emerald-500 pulse-ring"></span><span class="text-sm font-bold text-emerald-600">نشط</span>';
+        } else {
+          irrigationStatusEl.innerHTML = '<span class="w-3 h-3 rounded-full bg-slate-300"></span><span class="text-sm font-bold text-slate-600">متوقف</span>';
+        }
+
+        currentModeEl.textContent = sensor?.currentMode || '--';
+        
+        if (sensor?.updatedAt) {
+          flowUpdatedEl.textContent = formatTimestamp(sensor.updatedAt);
+        }
+
+        // Connection Status
+        if (connected) {
+          disconnectionAlert.classList.add('hidden');
+          connectionStatus.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> متصل';
+          connectionStatus.className = 'flex items-center gap-2 text-sm font-bold px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm';
+        } else {
+          showConnectionError();
+        }
+      }
+
+      function showConnectionError() {
+        disconnectionAlert.classList.remove('hidden');
+        connectionStatus.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> غير متصل';
+        connectionStatus.className = 'flex items-center gap-2 text-sm font-bold px-4 py-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-sm';
+      }
+
+      function updateControlDisplay(control, settings, sensor) {
+        const mode = control?.irrigationMode ?? 'off';
+        
+        if (!isUserEditingMode) {
+          const modeRadio = document.querySelector(`input[name="irrigation-mode"][value="${mode}"]`);
+          if (modeRadio && !modeRadio.checked) {
+            modeRadio.click();
+          }
+          updateManualControlsState(mode);
+        }
+
+        // تحديث حالة الزر - يعتمد على irrigationActive من ESP32
+        const isActive = sensor?.irrigationActive ?? false;
+
+        if (irrigationIndicator) {
+          irrigationIndicator.className = `w-4 h-4 rounded-full ${isActive ? 'bg-emerald-500 pulse-ring' : 'bg-slate-300'}`;
+        }
+        
+        if (irrigationStatusText) {
+          irrigationStatusText.textContent = isActive ? 'نشط - القفل مفتوح والمضخة تعمل' : 'متوقف - جاهز للتشغيل';
+        }
+
+        if (irrigationToggleBtn && irrigationToggleText) {
+          if (isActive) {
+            irrigationToggleBtn.className = 'w-full py-4 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-rose-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3';
+            irrigationToggleText.textContent = 'إطفاء';
+            irrigationToggleBtn.querySelector('i').className = 'fa-solid fa-power-off text-xl';
+          } else {
+            irrigationToggleBtn.className = 'w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3';
+            irrigationToggleText.textContent = 'تشغيل';
+            irrigationToggleBtn.querySelector('i').className = 'fa-solid fa-power-off text-xl';
+          }
+        }
+      }
+
+      // === Mode Selection ===
+      document.querySelectorAll('input[name="irrigation-mode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          const mode = e.target.value;
+          renderModeInputs(mode);
+          updateManualControlsState(mode);
+          isUserEditingMode = true;
+        });
+      });
+
+      function updateManualControlsState(mode) {
+        const manualControlsContainer = document.getElementById('manual-controls-container');
+        const manualDisabledWarning = document.getElementById('manual-disabled-warning');
+        const manualStatusBadge = document.getElementById('manual-status-badge');
+        
+        if (mode === 'manual') {
+          manualControlsContainer.style.opacity = '1';
+          manualControlsContainer.style.pointerEvents = 'auto';
+          manualDisabledWarning.classList.add('hidden');
+          manualStatusBadge.textContent = 'نشط';
+          manualStatusBadge.className = 'text-sm text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full font-bold';
+        } else {
+          manualControlsContainer.style.opacity = '0.5';
+          manualControlsContainer.style.pointerEvents = 'none';
+          manualDisabledWarning.classList.remove('hidden');
+          manualStatusBadge.textContent = 'معطل';
+          manualStatusBadge.className = 'text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full';
+        }
+      }
+
+      function renderModeInputs(mode) {
+        modeInputsContainer.innerHTML = '';
+
+        if (mode === 'quantitative') {
+          modeInputsContainer.innerHTML = `
+            <div class="p-5 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-4">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">💧 كمية الماء المطلوبة (لتر)</label>
+                <input type="number" id="quantitative-value" step="0.1" min="0" value="5" placeholder="مثال: 5.0" 
+                  class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">📅 الجدولة</label>
+                <select id="quantitative-schedule" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                  <option value="immediate">فوري (مرة واحدة)</option>
+                  <option value="hourly">متكرر - كل X ساعات</option>
+                  <option value="daily">يومي - في وقت محدد</option>
+                </select>
+              </div>
+              
+              <div id="quantitative-schedule-options" class="space-y-3"></div>
+            </div>
+          `;
+          
+          setTimeout(() => {
+            const scheduleSelect = document.getElementById('quantitative-schedule');
+            const optionsDiv = document.getElementById('quantitative-schedule-options');
+            
+            scheduleSelect.addEventListener('change', (e) => {
+              const schedType = e.target.value;
+              
+              if (schedType === 'hourly') {
+                optionsDiv.innerHTML = `
+                  <label class="block text-sm font-bold text-slate-700 mb-2">كل كم ساعة؟</label>
+                  <input type="number" id="quantitative-interval" step="1" min="1" max="24" value="6" placeholder="مثال: 6" 
+                    class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                  <p class="text-xs text-slate-500 mt-2">⏰ مثال: الري كل 6 ساعات</p>
+                `;
+              } else if (schedType === 'daily') {
+                optionsDiv.innerHTML = `
+                  <label class="block text-sm font-bold text-slate-700 mb-2">الوقت المحدد يومياً</label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs text-slate-600 mb-1">الساعة</label>
+                      <input type="number" id="quantitative-hour" min="0" max="23" value="6" placeholder="06" 
+                        class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-600 mb-1">الدقيقة</label>
+                      <input type="number" id="quantitative-minute" min="0" max="59" value="0" placeholder="00" 
+                        class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-2">⏰ مثال: يومياً في الساعة 06:00 صباحاً</p>
+                `;
+              } else {
+                optionsDiv.innerHTML = `<p class="text-xs text-slate-500">▸ سيبدأ الري فوراً عند التطبيق</p>`;
+              }
+            });
+            
+            scheduleSelect.dispatchEvent(new Event('change'));
+          }, 50);
+          
+        } else if (mode === 'temporal') {
+          modeInputsContainer.innerHTML = `
+            <div class="p-5 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-4">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">⏱️ مدة الري (دقيقة)</label>
+                <input type="number" id="temporal-value" step="1" min="1" value="10" placeholder="مثال: 10" 
+                  class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">📅 الجدولة</label>
+                <select id="temporal-schedule" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                  <option value="immediate">فوري (مرة واحدة)</option>
+                  <option value="hourly">متكرر - كل X ساعات</option>
+                  <option value="daily">يومي - في وقت محدد</option>
+                </select>
+              </div>
+              
+              <div id="temporal-schedule-options" class="space-y-3"></div>
+            </div>
+          `;
+          
+          setTimeout(() => {
+            const scheduleSelect = document.getElementById('temporal-schedule');
+            const optionsDiv = document.getElementById('temporal-schedule-options');
+            
+            scheduleSelect.addEventListener('change', (e) => {
+              const schedType = e.target.value;
+              
+              if (schedType === 'hourly') {
+                optionsDiv.innerHTML = `
+                  <label class="block text-sm font-bold text-slate-700 mb-2">كل كم ساعة؟</label>
+                  <input type="number" id="temporal-interval" step="1" min="1" max="24" value="6" placeholder="مثال: 6" 
+                    class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                  <p class="text-xs text-slate-500 mt-2">⏰ مثال: الري كل 6 ساعات</p>
+                `;
+              } else if (schedType === 'daily') {
+                optionsDiv.innerHTML = `
+                  <label class="block text-sm font-bold text-slate-700 mb-2">الوقت المحدد يومياً</label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs text-slate-600 mb-1">الساعة</label>
+                      <input type="number" id="temporal-hour" min="0" max="23" value="6" placeholder="06" 
+                        class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-600 mb-1">الدقيقة</label>
+                      <input type="number" id="temporal-minute" min="0" max="59" value="0" placeholder="00" 
+                        class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-2">⏰ مثال: يومياً في الساعة 06:00 صباحاً</p>
+                `;
+              } else {
+                optionsDiv.innerHTML = `<p class="text-xs text-slate-500">▸ سيبدأ الري فوراً عند التطبيق</p>`;
+              }
+            });
+            
+            scheduleSelect.dispatchEvent(new Event('change'));
+          }, 50);
+          
+        } else if (mode === 'moisture') {
+          modeInputsContainer.innerHTML = `
+            <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-4">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">🎯 حد الرطوبة للتشغيل (%)</label>
+                <input type="number" id="moisture-threshold" step="1" min="0" max="100" value="40" placeholder="مثال: 40" 
+                  class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                <p class="text-xs text-slate-500 mt-1">▸ عندما تنخفض الرطوبة تحت هذا الحد، سيبدأ الري</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">🔍 فحص الرطوبة كل (دقيقة)</label>
+                <input type="number" id="moisture-check-interval" step="5" min="5" max="120" value="30" placeholder="مثال: 30" 
+                  class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+                <p class="text-xs text-slate-500 mt-1">▸ يُنصح بـ 15-60 دقيقة</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">💧 نوع الري عند الحاجة</label>
+                <select id="moisture-type" class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                  <option value="quantitative">كمي (Quantitative)</option>
+                  <option value="temporal">وقتي (Temporal)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">📊 القيمة (لتر أو دقيقة)</label>
+                <input type="number" id="moisture-value" step="0.1" min="0" value="5" placeholder="مثال: 5" 
+                  class="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" dir="ltr">
+              </div>
+            </div>
+          `;
+        } else if (mode === 'manual') {
+          modeInputsContainer.innerHTML = `
+            <div class="p-5 bg-amber-50/50 rounded-2xl border border-amber-100">
+              <p class="text-sm text-slate-600 text-center font-bold">استخدم زر "تشغيل/إطفاء" على اليسار.</p>
+              <p class="text-xs text-slate-500 text-center mt-2">⚠️ الزر الواحد يفتح القفل ويشغل المضخة معاً - آمن من التلف</p>
+            </div>
+          `;
+        }
+      }
+
+      applyModeBtn.addEventListener('click', async () => {
+        if (!CURRENT_UNIT_ID) return;
+
+        const mode = document.querySelector('input[name="irrigation-mode"]:checked')?.value;
+        if (!mode) {
+          showToast('الرجاء اختيار وضع الري', 'error');
+          return;
+        }
+
+        const payload = { irrigationMode: mode };
+        if (mode !== 'manual') {
+          // عند التبديل من اليدوي، نضمن إغلاق القفل وإيقاف المضخة
+          payload.manualIrrigationToggle = false;
+        }
+
+        if (mode === 'quantitative') {
+          const value = parseFloat(document.getElementById('quantitative-value')?.value);
+          if (!value || value <= 0) return showToast('الرجاء إدخال كمية صحيحة', 'error');
+          payload.quantitativeValue = value;
+          
+          const schedule = document.getElementById('quantitative-schedule')?.value;
+          payload.quantitativeSchedule = schedule;
+          
+          if (schedule === 'hourly') {
+            const interval = parseInt(document.getElementById('quantitative-interval')?.value);
+            if (!interval || interval < 1) return showToast('الرجاء إدخال فترة صحيحة', 'error');
+            payload.quantitativeInterval = interval;
+          } else if (schedule === 'daily') {
+            const hour = parseInt(document.getElementById('quantitative-hour')?.value);
+            const minute = parseInt(document.getElementById('quantitative-minute')?.value);
+            if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return showToast('الرجاء إدخال وقت صحيح', 'error');
+            payload.quantitativeDailyHour = hour;
+            payload.quantitativeDailyMinute = minute;
+          }
+        } else if (mode === 'temporal') {
+          const value = parseInt(document.getElementById('temporal-value')?.value);
+          if (!value || value <= 0) return showToast('الرجاء إدخال مدة صحيحة', 'error');
+          payload.temporalValue = value;
+          
+          const schedule = document.getElementById('temporal-schedule')?.value;
+          payload.temporalSchedule = schedule;
+          
+          if (schedule === 'hourly') {
+            const interval = parseInt(document.getElementById('temporal-interval')?.value);
+            if (!interval || interval < 1) return showToast('الرجاء إدخال فترة صحيحة', 'error');
+            payload.temporalInterval = interval;
+          } else if (schedule === 'daily') {
+            const hour = parseInt(document.getElementById('temporal-hour')?.value);
+            const minute = parseInt(document.getElementById('temporal-minute')?.value);
+            if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return showToast('الرجاء إدخال وقت صحيح', 'error');
+            payload.temporalDailyHour = hour;
+            payload.temporalDailyMinute = minute;
+          }
+        } else if (mode === 'moisture') {
+          const threshold = parseInt(document.getElementById('moisture-threshold')?.value);
+          const checkInterval = parseInt(document.getElementById('moisture-check-interval')?.value);
+          const type = document.getElementById('moisture-type')?.value;
+          const value = parseFloat(document.getElementById('moisture-value')?.value);
+          
+          if (!threshold || threshold < 0 || threshold > 100) return showToast('تأكد من صحة المدخلات', 'error');
+          
+          payload.moistureThreshold = threshold;
+          payload.moistureCheckInterval = checkInterval;
+          payload.moistureIrrigationType = type;
+          payload.moistureIrrigationValue = value;
+        }
+
+        try {
+          socket.emit('irrigation_action', {
+            unitId: CURRENT_UNIT_ID,
+            action: payload
+          });
+          showToast('تم إرسال أمر تطبيق الوضع');
+          isUserEditingMode = false;
+        } catch (err) {
+          showToast('خطأ في الاتصال بالخادم', 'error');
+        }
+      });
+
+      // ⭐ زر واحد للتحكم - يفتح القفل ويشغل المضخة معاً
+      irrigationToggleBtn.addEventListener('click', async () => {
+        if (!CURRENT_UNIT_ID) return;
+        const currentMode = document.querySelector('input[name="irrigation-mode"]:checked')?.value;
+        if (currentMode !== 'manual') {
+          showToast('يجب تفعيل الوضع اليدوي أولاً', 'error');
+          return;
+        }
+
+        // تحديد الحالة من الزر نفسه عوضا عن طلب جديد للسرعة (optimistic update UI)
+        const isCurrentlyActive = irrigationToggleText.textContent === 'إطفاء';
+        const shouldStart = !isCurrentlyActive;
+
+        try {
+          socket.emit('irrigation_action', {
+            unitId: CURRENT_UNIT_ID,
+            action: {
+              irrigationMode: 'manual',
+              manualIrrigationToggle: shouldStart
+            }
+          });
+
+          // Optimistic UI update - تحديث فوري للزر بدون انتظار ESP32
+          if (shouldStart) {
+            irrigationToggleBtn.className = 'w-full py-4 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-rose-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3';
+            irrigationToggleText.textContent = 'إطفاء';
+          } else {
+            irrigationToggleBtn.className = 'w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3';
+            irrigationToggleText.textContent = 'تشغيل';
+          }
+          showToast(shouldStart ? 'جاري تشغيل الري...' : 'جاري إيقاف الري...');
+        } catch (err) {
+          showToast('خطأ في الاتصال بالشبكة', 'error');
+        }
+      });
+
+      emergencyStopBtn.addEventListener('click', async () => {
+        if (!CURRENT_UNIT_ID) return;
+        try {
+          socket.emit('irrigation_action', {
+            unitId: CURRENT_UNIT_ID,
+            action: {
+              irrigationMode: 'off',
+              manualIrrigationToggle: false
+            }
+          });
+
+          // Optimistic UI update
+          if (irrigationToggleBtn && irrigationToggleText) {
+            irrigationToggleBtn.className = 'w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3';
+            irrigationToggleText.textContent = 'تشغيل';
+          }
+          if (irrigationIndicator) {
+            irrigationIndicator.className = 'w-4 h-4 rounded-full bg-slate-300';
+          }
+          if (irrigationStatusText) {
+            irrigationStatusText.textContent = 'متوقف - جاهز للتشغيل';
+          }
+          showToast('تم إرسال أمر الإيقاف الطارئ', 'warning');
+          isUserEditingMode = false;
+        } catch (err) { showToast('خطأ في الاتصال', 'error'); }
+      });
+
+      resetWaterBtn.addEventListener('click', async () => {
+        if (!CURRENT_UNIT_ID) return;
+        if (!confirm('هل أنت متأكد من تصفير عداد المياه الإجمالي؟')) return;
+
+        try {
+          socket.emit('irrigation_action', {
+            unitId: CURRENT_UNIT_ID,
+            action: { resetTotalWater: true }
+          });
+          showToast('تم إرسال أمر التصفير');
+        } catch (err) { showToast('خطأ في الاتصال بالخادم', 'error'); }
+      });
+
+      // === Initial State & setup WebSockets ===
+      updateManualControlsState('off');
+
+      // Initial fetch to populate UI
+      fetchUnitsList();
+      fetchUnitStatus();
+
+      // Setup Socket.IO for Real-time Updates Instead of HTTP Polling
+      const socket = io();
+
+      // Listen for Summary Updates (Dashboard View)
+      socket.on('irrigation_summary', (payload) => {
+        if (currentView === 'dashboard') {
+          const units = payload.units || [];
+          unitsList = units.map(unit => unit.unitId);
+          
+          if (payload.centralPump) {
+            updateCentralPumpCard(payload.centralPump);
+          }
+          renderDashboardCards(units);
+        }
+      });
+
+      // We need a variable to track the currently active unit listener
+      let activeUnitListener = null;
+
+      // Handle View Switching to attach/detach specific unit listeners
+      const originalSwitchView = switchView;
+      switchView = function(viewName) {
+        originalSwitchView(viewName);
+
+        // Clean up previous listener if it exists
+        if (activeUnitListener) {
+          socket.off(activeUnitListener);
+          activeUnitListener = null;
+        }
+
+        // If entering details view, listen to that specific unit's broadcast
+        if (viewName === 'details' && CURRENT_UNIT_ID) {
+          activeUnitListener = `irrigation_unit_${CURRENT_UNIT_ID}`;
+          socket.on(activeUnitListener, (payload) => {
+            if (currentView === 'details' && CURRENT_UNIT_ID === payload.unit?.unitId) {
+              updateSensorDisplay(payload.unit.sensorData, payload.unit.control);
+              updateControlDisplay(payload.unit.control, payload.unit.settings, payload.unit.sensorData);
+            }
+          });
+        }
+      };
+
+      // Mobile Menu Toggle
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+          const icon = mobileMenuBtn.querySelector('i');
+          if (mobileMenu.classList.contains('hidden')) {
+            icon.className = 'fa-solid fa-bars';
+          } else {
+            icon.className = 'fa-solid fa-xmark';
+          }
+        });
+      }
+
+      // Authentication Check
+      (function() {
+        const token = localStorage.getItem('eco_token');
+        const user = JSON.parse(localStorage.getItem('eco_user') || '{}');
+        
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const adminLink = document.getElementById('adminLink');
+        const adminLinkMobile = document.getElementById('adminLinkMobile');
+
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
+
+        if (user.role === 'admin') {
+          if (adminLink) adminLink.classList.remove('hidden');
+          if (adminLinkMobile) adminLinkMobile.classList.remove('hidden');
+        }
+
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('eco_token');
+          localStorage.removeItem('eco_user');
+          window.location.href = '/login.html';
+        });
+      })();
+    </script>
+  </body>
+</html>

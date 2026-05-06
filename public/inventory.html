@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إدارة المخزون والأحواض - إيكو كونترول</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Cairo', 'sans-serif'] },
+            colors: {
+              primary: '#059669',
+              secondary: '#475569',
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #f1f5f9; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      .glass {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+      }
+      .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
+    
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-leaf text-xl"></i>
+            </div>
+            <span class="font-bold text-2xl tracking-tight text-emerald-900">إيكو كونترول</span>
+          </div>
+          <div class="hidden md:flex items-center gap-8">
+            <a href="/" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الرئيسية</a>
+            <a href="/climate.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">التحكم بالمناخ</a>
+            <a href="/irrigation.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">نظام الري</a>
+            <a href="/inventory.html" class="text-base font-bold text-primary">المخزون</a>
+            <a href="/ai.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الذكاء الاصطناعي</a>
+            <a id="adminLink" href="/admin.html" class="hidden text-base font-medium text-slate-600 hover:text-primary transition-colors">الإدارة</a>
+          </div>
+          <button id="mobile-menu-btn" class="md:hidden text-slate-600 text-xl p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white/95 backdrop-blur-lg">
+        <div class="px-4 py-4 space-y-2">
+          <a href="/" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الرئيسية</a>
+          <a href="/climate.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">التحكم بالمناخ</a>
+          <a href="/irrigation.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">نظام الري</a>
+          <a href="/inventory.html" class="block px-4 py-3 text-base font-bold text-primary bg-green-50 rounded-xl">المخزون</a>
+          <a href="/ai.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الذكاء الاصطناعي</a>
+          <a id="adminLinkMobile" href="/admin.html" class="hidden block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الإدارة</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      
+      <!-- Tabs Navigation -->
+      <div class="flex flex-col sm:flex-row p-1 bg-slate-200 rounded-xl w-full sm:w-fit gap-1 sm:gap-0">
+        <button id="tab-layout-btn" onclick="switchTab('layout')" class="px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-emerald-700 shadow-sm">
+          <i class="fa-solid fa-border-all ml-2"></i> خريطة الأحواض
+        </button>
+        <button id="tab-inventory-btn" onclick="switchTab('inventory')" class="px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all text-slate-600 hover:bg-slate-50">
+          <i class="fa-solid fa-clipboard-list ml-2"></i> المخزون
+        </button>
+      </div>
+
+      <!-- SECTION: Greenhouse Layout -->
+      <div id="layout-view" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Map Grid -->
+        <div class="lg:col-span-2 card glass rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-emerald-500"></i>
+              توزيع الأحواض (Greenhouse Map)
+            </h2>
+            <button onclick="openEditBedModal(null, true)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+              <i class="fa-solid fa-plus"></i> إضافة حوض
+            </button>
+          </div>
+          
+          <!-- Graphical Bed Container -->
+          <div class="relative bg-stone-100 rounded-xl p-6 border-2 border-stone-200 min-h-[400px]">
+            <div class="absolute top-2 left-3 text-[10px] text-stone-400 font-bold tracking-widest">مدخل الدفيئة</div>
+            <div class="absolute bottom-2 left-3 text-[10px] text-stone-400 font-bold tracking-widest">الجدار الخلفي</div>
+            
+            <!-- The Grid itself -->
+            <div id="beds-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+              <!-- JS Rendering -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Bed Details -->
+        <div class="card glass rounded-2xl p-6 border border-slate-200 shadow-sm h-fit sticky top-24">
+          <div id="bed-details-empty" class="text-center py-10 text-slate-400">
+            <i class="fa-solid fa-hand-pointer text-4xl mb-3 opacity-50"></i>
+            <p>اختر حوضاً من الخريطة لعرض التفاصيل وتعديلها</p>
+          </div>
+
+          <div id="bed-details-content" class="hidden">
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <span id="detail-bed-id" class="text-xs font-bold text-slate-500 uppercase tracking-wider"></span>
+                <h3 id="detail-bed-name" class="text-xl font-bold text-slate-900 mt-1"></h3>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="openEditBedModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 transition-colors flex items-center justify-center" title="تعديل">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button onclick="deleteBed()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors flex items-center justify-center" title="حذف الحوض">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="bg-stone-50 p-4 rounded-xl border border-stone-100 mb-6">
+              <p class="text-xs text-stone-400 font-bold mb-1">الوصف</p>
+              <p id="detail-bed-desc" class="text-sm text-stone-700 leading-relaxed"></p>
+            </div>
+
+            <div class="mb-4 flex items-center justify-between">
+              <h4 class="font-bold text-slate-800 text-sm">النباتات في الحوض</h4>
+              <span id="detail-plant-count" class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">0</span>
+            </div>
+            
+            <ul id="detail-bed-plants" class="space-y-2 mb-6">
+              <!-- Plants list -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: Global Inventory -->
+      <div id="inventory-view" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Plants Catalog -->
+        <div class="card glass rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-seedling text-emerald-500"></i>
+              كتالوج النباتات
+            </h2>
+            <button onclick="openPlantModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> إضافة نبات
+            </button>
+          </div>
+          <div id="plants-catalog-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+            <!-- JS Rendering -->
+          </div>
+        </div>
+
+        <!-- Fertilizers Stock -->
+        <div class="card glass rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-flask text-blue-500"></i>
+              مخزون الأسمدة
+            </h2>
+            <button onclick="openFertilizerModal()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> إضافة سماد
+            </button>
+          </div>
+          <div id="fertilizers-stock-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+            <!-- JS Rendering -->
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- MODALS -->
+    
+    <!-- 1. Edit Bed Modal -->
+    <div id="modal-bed" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0" id="modal-bed-panel">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 class="font-bold text-lg text-slate-800">تعديل بيانات الحوض</h3>
+          <button onclick="closeModal('modal-bed')" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="edit-bed-id">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">اسم الحوض</label>
+            <input type="text" id="edit-bed-name" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">الوصف</label>
+            <textarea id="edit-bed-desc" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"></textarea>
+          </div>
+          
+          <div class="pt-2 border-t border-slate-100">
+            <label class="block text-xs font-bold text-slate-600 mb-2">النباتات المزروعة (أدخل كل نوع في سطر)</label>
+            <div class="space-y-2" id="edit-bed-plants-container">
+              <!-- Dynamic inputs -->
+            </div>
+            <button type="button" onclick="addBedPlantInput()" class="mt-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+              <i class="fa-solid fa-plus-circle"></i> إضافة نوع آخر
+            </button>
+          </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+          <button onclick="closeModal('modal-bed')" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg">إلغاء</button>
+          <button onclick="saveBedChanges()" class="px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm">حفظ التعديلات</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Plant Item Modal -->
+    <div id="modal-plant" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0" id="modal-plant-panel">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 class="font-bold text-lg text-slate-800" id="plant-modal-title">إضافة نبات جديد</h3>
+          <button onclick="closeModal('modal-plant')" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="plant-id"> <!-- Empty for new -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">اسم النبات <span class="text-red-500">*</span></label>
+            <input type="text" id="plant-name" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">الفئة</label>
+              <select id="plant-category" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
+                <option value="خضروات">خضروات</option>
+                <option value="فاكهة">فاكهة</option>
+                <option value="ورقيات">ورقيات</option>
+                <option value="زينة">زينة</option>
+                <option value="أخرى">أخرى</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">الصنف (اختياري)</label>
+              <input type="text" id="plant-variety" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">ملاحظات</label>
+            <textarea id="plant-notes" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"></textarea>
+          </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+          <button onclick="closeModal('modal-plant')" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg">إلغاء</button>
+          <button onclick="savePlant()" class="px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm">حفظ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Fertilizer Item Modal -->
+    <div id="modal-fertilizer" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0" id="modal-fertilizer-panel">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 class="font-bold text-lg text-slate-800" id="fertilizer-modal-title">إضافة مادة</h3>
+          <button onclick="closeModal('modal-fertilizer')" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="fert-id">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">اسم المادة <span class="text-red-500">*</span></label>
+            <input type="text" id="fert-name" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">النوع</label>
+              <select id="fert-type" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                <option value="سماد">سماد</option>
+                <option value="مغذي">مغذي</option>
+                <option value="مبيد">مبيد</option>
+                <option value="أخرى">أخرى</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">الحد الأدنى (تنبيه)</label>
+              <input type="number" id="fert-min" step="0.1" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">الكمية الحالية</label>
+              <input type="number" id="fert-qty" step="0.1" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">الوحدة</label>
+              <input type="text" id="fert-unit" placeholder="L, kg..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">ملاحظات</label>
+            <textarea id="fert-notes" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"></textarea>
+          </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+          <button onclick="closeModal('modal-fertilizer')" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg">إلغاء</button>
+          <button onclick="saveFertilizer()" class="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm">حفظ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="fixed bottom-6 left-6 z-[60] flex flex-col gap-3" dir="rtl"></div>
+
+    <script>
+      // --- STATE MANAGEMENT ---
+      let greenhouseData = { beds: [] };
+      let inventoryData = { plants: [], fertilizers: [] };
+      let currentBedId = null; // Currently selected bed for viewing/editing
+
+      // --- INITIALIZATION ---
+      window.addEventListener('DOMContentLoaded', () => {
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuBtn && mobileMenu) {
+          mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = mobileMenuBtn.querySelector('i');
+            if (mobileMenu.classList.contains('hidden')) {
+              icon.className = 'fa-solid fa-bars';
+            } else {
+              icon.className = 'fa-solid fa-xmark';
+            }
+          });
+        }
+
+        // Authentication Check
+        const token = localStorage.getItem('eco_token');
+        const user = JSON.parse(localStorage.getItem('eco_user') || '{}');
+        
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+        const adminLink = document.getElementById('adminLink');
+        const adminLinkMobile = document.getElementById('adminLinkMobile');
+
+        logoutBtn.classList.remove('hidden');
+        if (logoutBtnMobile) logoutBtnMobile.classList.remove('hidden');
+        
+        if (user.role === 'admin') {
+          if (adminLink) adminLink.classList.remove('hidden');
+          if (adminLinkMobile) adminLinkMobile.classList.remove('hidden');
+        }
+
+        const handleLogout = () => {
+          localStorage.removeItem('eco_token');
+          localStorage.removeItem('eco_user');
+          window.location.href = '/login.html';
+        };
+
+        logoutBtn.addEventListener('click', handleLogout);
+        if (logoutBtnMobile) logoutBtnMobile.addEventListener('click', handleLogout);
+
+        loadAllData();
+      });
+
+      async function loadAllData() {
+        try {
+          const [layoutRes, invRes] = await Promise.all([
+            fetch('/api/greenhouse/layout'),
+            fetch('/api/inventory')
+          ]);
+          
+          if (layoutRes.ok) {
+            const data = await layoutRes.json();
+            if (data.ok) greenhouseData = data.layout;
+          }
+          
+          if (invRes.ok) {
+            const data = await invRes.json();
+            if (data.ok) inventoryData = data.inventory;
+          }
+
+          renderBedGrid();
+          renderInventoryLists();
+        } catch (e) {
+          console.error(e);
+          showToast('فشل تحميل البيانات', 'error');
+        }
+      }
+
+      // --- TABS LOGIC ---
+      function switchTab(tabName) {
+        const layoutView = document.getElementById('layout-view');
+        const invView = document.getElementById('inventory-view');
+        const layoutBtn = document.getElementById('tab-layout-btn');
+        const invBtn = document.getElementById('tab-inventory-btn');
+
+        if (tabName === 'layout') {
+          layoutView.classList.remove('hidden');
+          invView.classList.add('hidden');
+          
+          layoutBtn.className = 'px-6 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-emerald-700 shadow-sm';
+          layoutBtn.innerHTML = '<i class="fa-solid fa-border-all ml-2"></i> خريطة الأحواض';
+          
+          invBtn.className = 'px-6 py-2.5 rounded-lg text-sm font-bold transition-all text-slate-600 hover:bg-slate-50';
+          invBtn.innerHTML = '<i class="fa-solid fa-clipboard-list ml-2"></i> المخزون (نباتات وأسمدة)';
+        } else {
+          layoutView.classList.add('hidden');
+          invView.classList.remove('hidden');
+          
+          invBtn.className = 'px-6 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-emerald-700 shadow-sm';
+          invBtn.innerHTML = '<i class="fa-solid fa-clipboard-list ml-2"></i> المخزون (نباتات وأسمدة)';
+
+          layoutBtn.className = 'px-6 py-2.5 rounded-lg text-sm font-bold transition-all text-slate-600 hover:bg-slate-50';
+          layoutBtn.innerHTML = '<i class="fa-solid fa-border-all ml-2"></i> خريطة الأحواض';
+        }
+      }
+
+      // --- RENDERING: BEDS ---
+      function renderBedGrid() {
+        const grid = document.getElementById('beds-grid');
+        grid.innerHTML = '';
+
+        if (greenhouseData.beds.length === 0) {
+          grid.innerHTML = '<div class="col-span-3 text-center py-8 text-stone-400 font-bold">لا توجد أحواض. أضف حوضاً جديداً.</div>';
+          return;
+        }
+
+        greenhouseData.beds.forEach(bed => {
+          const plantCount = bed.plants ? bed.plants.length : 0;
+          const isActive = currentBedId === bed.bedId;
+          
+          // Graphical "Planter Box" styling
+          const div = document.createElement('div');
+          div.onclick = () => selectBed(bed.bedId);
+          div.className = `
+            relative cursor-pointer rounded-lg border-b-8 transition-all transform active:scale-95
+            ${isActive 
+              ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-400 shadow-lg -translate-y-1' 
+              : 'bg-amber-100/50 border-stone-300 hover:border-emerald-400 hover:-translate-y-1 hover:shadow-md'}
+          `;
+          div.style.minHeight = '120px';
+          
+          // Generate visual "plants" dots
+          let visualPlants = '';
+          if (plantCount > 0) {
+             visualPlants = '<div class="absolute bottom-3 right-3 left-3 flex flex-wrap gap-1 justify-center opacity-60">';
+             for(let i=0; i<Math.min(plantCount, 12); i++) {
+               visualPlants += '<i class="fa-solid fa-seedling text-emerald-600 text-xs"></i>';
+             }
+             if(plantCount > 12) visualPlants += '<span class="text-[10px] text-emerald-700 font-bold">+'+(plantCount-12)+'</span>';
+             visualPlants += '</div>';
+          } else {
+            visualPlants = '<div class="absolute inset-0 flex items-center justify-center opacity-10"><i class="fa-solid fa-layer-group text-4xl text-stone-400"></i></div>';
+          }
+
+          div.innerHTML = `
+            <div class="absolute top-0 left-0 bg-stone-200 text-stone-500 text-[10px] font-bold px-2 py-0.5 rounded-br-lg">#${bed.bedId}</div>
+            <div class="p-4 text-center relative z-10">
+              <h4 class="font-bold text-stone-800 text-sm mt-2">${bed.name || 'حوض فارغ'}</h4>
+              ${plantCount > 0 
+                ? `<span class="inline-block mt-1 px-2 py-0.5 bg-white/60 rounded-full text-[10px] font-bold text-emerald-700 shadow-sm">${plantCount} نبات</span>`
+                : '<span class="inline-block mt-1 text-[10px] text-stone-400">فارغ</span>'}
+            </div>
+            ${visualPlants}
+          `;
+          grid.appendChild(div);
+        });
+
+        // Re-select current bed to update details view if data changed
+        if (currentBedId) {
+          const bed = greenhouseData.beds.find(b => b.bedId === currentBedId);
+          if (bed) showBedDetails(bed);
+          else {
+            // If selected bed was deleted, clear selection
+            currentBedId = null;
+            document.getElementById('bed-details-content').classList.add('hidden');
+            document.getElementById('bed-details-empty').classList.remove('hidden');
+          }
+        }
+      }
+
+      function selectBed(id) {
+        currentBedId = id;
+        renderBedGrid(); // update active state styling
+      }
+
+      function showBedDetails(bed) {
+        document.getElementById('bed-details-empty').classList.add('hidden');
+        document.getElementById('bed-details-content').classList.remove('hidden');
+
+        document.getElementById('detail-bed-id').textContent = `ID #${bed.bedId}`;
+        document.getElementById('detail-bed-name').textContent = bed.name || `حوض ${bed.bedId}`;
+        document.getElementById('detail-bed-desc').textContent = bed.description || 'لا يوجد وصف لهذا الحوض.';
+        document.getElementById('detail-plant-count').textContent = (bed.plants ? bed.plants.length : 0);
+
+        const list = document.getElementById('detail-bed-plants');
+        list.innerHTML = '';
+        
+        if (!bed.plants || bed.plants.length === 0) {
+          list.innerHTML = '<li class="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">لا توجد نباتات مضافة.<br>اضغط زر التعديل لإضافة نباتات.</li>';
+        } else {
+          bed.plants.forEach(p => {
+            const li = document.createElement('li');
+            li.className = 'bg-white border border-slate-100 p-3 rounded-lg flex items-start gap-3 shadow-sm';
+            li.innerHTML = `
+              <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-leaf text-sm"></i>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-800">${p.name}</p>
+                ${p.notes ? `<p class="text-xs text-slate-500 mt-0.5">${p.notes}</p>` : ''}
+                ${p.variety ? `<span class="inline-block mt-1 text-[10px] bg-slate-100 text-slate-600 px-1.5 rounded border border-slate-200">${p.variety}</span>` : ''}
+              </div>
+            `;
+            list.appendChild(li);
+          });
+        }
+      }
+
+      // --- MODAL & EDIT LOGIC: BEDS ---
+      function openEditBedModal(id = null, isNew = false) {
+        // Reset
+        document.getElementById('edit-bed-plants-container').innerHTML = '';
+        
+        if (isNew) {
+            document.getElementById('edit-bed-id').value = 'NEW';
+            document.getElementById('edit-bed-name').value = '';
+            document.getElementById('edit-bed-desc').value = '';
+            addBedPlantInput(); // Add one empty slot
+        } else {
+            // Edit existing
+            const targetId = id || currentBedId;
+            const bed = greenhouseData.beds.find(b => b.bedId === targetId);
+            if (!bed) return;
+
+            document.getElementById('edit-bed-id').value = bed.bedId;
+            document.getElementById('edit-bed-name').value = bed.name || '';
+            document.getElementById('edit-bed-desc').value = bed.description || '';
+            
+            if (bed.plants && bed.plants.length > 0) {
+              bed.plants.forEach(p => addBedPlantInput(p.name));
+            } else {
+              addBedPlantInput();
+            }
+        }
+
+        openModal('modal-bed');
+      }
+
+      function addBedPlantInput(selectedValue = '') {
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2';
+        
+        // Build options from Inventory
+        let options = '<option value="">-- اختر من المخزون --</option>';
+        inventoryData.plants.forEach(p => {
+            const isSelected = p.name === selectedValue ? 'selected' : '';
+            options += `<option value="${p.name}" ${isSelected}>${p.name}</option>`;
+        });
+        options += '<option value="__custom__">كتابة اسم يدوي...</option>';
+
+        div.innerHTML = `
+          <div class="flex-1 flex gap-2">
+              <select class="bed-plant-select w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-emerald-500 outline-none text-sm bg-white" onchange="handlePlantSelectChange(this)">
+                  ${options}
+              </select>
+              <input type="text" value="${selectedValue}" placeholder="اسم النبات" class="bed-plant-input w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-emerald-500 outline-none text-sm ${selectedValue && !inventoryData.plants.some(p=>p.name===selectedValue) ? '' : 'hidden'}">
+          </div>
+          <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 p-2"><i class="fa-solid fa-trash"></i></button>
+        `;
+        document.getElementById('edit-bed-plants-container').appendChild(div);
+        
+        // Initial check: if value exists but not in inventory (custom), show input
+        // Logic handled by class hidden toggle above mostly, but let's refine in change handler
+      }
+
+      function handlePlantSelectChange(selectElem) {
+          const inputElem = selectElem.nextElementSibling;
+          if (selectElem.value === '__custom__') {
+              inputElem.classList.remove('hidden');
+              inputElem.focus();
+              inputElem.value = '';
+          } else {
+              inputElem.classList.add('hidden');
+              inputElem.value = selectElem.value; // Set input value to selected
+          }
+      }
+
+      async function saveBedChanges() {
+        const idField = document.getElementById('edit-bed-id').value;
+        const name = document.getElementById('edit-bed-name').value;
+        const desc = document.getElementById('edit-bed-desc').value;
+        
+        // Collect plants
+        const plantInputs = document.querySelectorAll('.bed-plant-input');
+        const newPlants = Array.from(plantInputs)
+          .map(input => input.value.trim())
+          .filter(val => val !== '')
+          .map(val => {
+              // Try to find more details from inventory if possible
+              const invPlant = inventoryData.plants.find(p => p.name === val);
+              return { 
+                  name: val, 
+                  category: invPlant ? invPlant.category : 'عام', 
+                  variety: invPlant ? invPlant.variety : '', 
+                  notes: '' 
+              }; 
+          });
+
+        // Logic for New vs Edit
+        if (idField === 'NEW') {
+            const newId = (greenhouseData.beds.length + 1).toString();
+            greenhouseData.beds.push({
+                bedId: newId,
+                name: name || `حوض ${newId}`,
+                description: desc,
+                plants: newPlants
+            });
+        } else {
+            const bedIndex = greenhouseData.beds.findIndex(b => b.bedId === idField);
+            if (bedIndex === -1) return;
+
+            greenhouseData.beds[bedIndex] = {
+              ...greenhouseData.beds[bedIndex],
+              name: name,
+              description: desc,
+              plants: newPlants
+            };
+        }
+
+        // Send to Server
+        try {
+          const res = await fetch('/api/greenhouse/layout', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ layout: greenhouseData })
+          });
+          
+          if (res.ok) {
+            showToast('تم حفظ بيانات الحوض بنجاح', 'success');
+            closeModal('modal-bed');
+            renderBedGrid();
+          } else {
+            showToast('حدث خطأ أثناء الحفظ', 'error');
+          }
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في الاتصال', 'error');
+        }
+      }
+
+      async function deleteBed() {
+          if (!currentBedId) return;
+          if (!confirm('هل أنت متأكد من حذف هذا الحوض نهائياً؟')) return;
+
+          const bedIndex = greenhouseData.beds.findIndex(b => b.bedId === currentBedId);
+          if (bedIndex > -1) {
+              greenhouseData.beds.splice(bedIndex, 1);
+              // Save
+              try {
+                const res = await fetch('/api/greenhouse/layout', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ layout: greenhouseData })
+                });
+                if (res.ok) {
+                    showToast('تم حذف الحوض', 'success');
+                    renderBedGrid(); // This will clear selection
+                }
+              } catch(e) {
+                  showToast('خطأ في الحذف', 'error');
+              }
+          }
+      }
+
+      // --- RENDERING: INVENTORY ---
+      function renderInventoryLists() {
+        // Plants
+        const plantList = document.getElementById('plants-catalog-list');
+        plantList.innerHTML = '';
+        
+        inventoryData.plants.forEach((plant, index) => {
+          const div = document.createElement('div');
+          div.className = 'flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-emerald-200 transition-colors group';
+          div.innerHTML = `
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="font-bold text-slate-800 text-sm">${plant.name}</h4>
+                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">${plant.category || 'عام'}</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">${plant.variety || ''} ${plant.notes ? '• ' + plant.notes : ''}</p>
+            </div>
+            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onclick="editPlant(${index})" class="w-7 h-7 rounded bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600"><i class="fa-solid fa-pen text-xs"></i></button>
+              <button onclick="deletePlant(${index})" class="w-7 h-7 rounded bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
+            </div>
+          `;
+          plantList.appendChild(div);
+        });
+
+        // Fertilizers
+        const fertList = document.getElementById('fertilizers-stock-list');
+        fertList.innerHTML = '';
+
+        inventoryData.fertilizers.forEach((fert, index) => {
+          const isLow = fert.quantity <= (fert.minThreshold || 0);
+          
+          const div = document.createElement('div');
+          div.className = `flex items-center justify-between p-3 bg-white border rounded-xl transition-colors group ${isLow ? 'border-red-200 bg-red-50/30' : 'border-slate-100 hover:border-blue-200'}`;
+          div.innerHTML = `
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="font-bold text-slate-800 text-sm">${fert.name}</h4>
+                ${isLow ? '<i class="fa-solid fa-triangle-exclamation text-red-500 text-xs" title="منخفض"></i>' : ''}
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                <span class="font-bold text-slate-700">${fert.quantity} ${fert.unit}</span> 
+                <span class="text-slate-400 mx-1">|</span> ${fert.type}
+              </p>
+            </div>
+            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onclick="editFertilizer(${index})" class="w-7 h-7 rounded bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600"><i class="fa-solid fa-pen text-xs"></i></button>
+              <button onclick="deleteFertilizer(${index})" class="w-7 h-7 rounded bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
+            </div>
+          `;
+          fertList.appendChild(div);
+        });
+      }
+
+      // --- MODAL & EDIT LOGIC: PLANTS ---
+      function openPlantModal(index = null) {
+        const isEdit = index !== null;
+        document.getElementById('plant-modal-title').textContent = isEdit ? 'تعديل بيانات نبات' : 'إضافة نبات جديد';
+        
+        if (isEdit) {
+          const p = inventoryData.plants[index];
+          document.getElementById('plant-id').value = index; // Store index instead of ID for simplicity
+          document.getElementById('plant-name').value = p.name;
+          document.getElementById('plant-category').value = p.category || 'أخرى';
+          document.getElementById('plant-variety').value = p.variety || '';
+          document.getElementById('plant-notes').value = p.notes || '';
+        } else {
+          document.getElementById('plant-id').value = '';
+          document.getElementById('plant-name').value = '';
+          document.getElementById('plant-category').value = 'خضروات';
+          document.getElementById('plant-variety').value = '';
+          document.getElementById('plant-notes').value = '';
+        }
+        openModal('modal-plant');
+      }
+
+      function editPlant(index) { openPlantModal(index); }
+
+      async function savePlant() {
+        const indexVal = document.getElementById('plant-id').value;
+        const isNew = indexVal === '';
+        
+        const newPlant = {
+          id: isNew ? 'plant_' + Date.now() : inventoryData.plants[indexVal].id,
+          name: document.getElementById('plant-name').value,
+          category: document.getElementById('plant-category').value,
+          variety: document.getElementById('plant-variety').value,
+          notes: document.getElementById('plant-notes').value,
+          beds: isNew ? [] : inventoryData.plants[indexVal].beds
+        };
+
+        if (!newPlant.name) { showToast('اسم النبات مطلوب', 'error'); return; }
+
+        if (isNew) {
+          inventoryData.plants.push(newPlant);
+        } else {
+          inventoryData.plants[indexVal] = newPlant;
+        }
+
+        await saveInventory();
+        closeModal('modal-plant');
+      }
+
+      async function deletePlant(index) {
+        if (!confirm('هل أنت متأكد من حذف هذا النبات من الكتالوج؟')) return;
+        inventoryData.plants.splice(index, 1);
+        await saveInventory();
+      }
+
+      // --- MODAL & EDIT LOGIC: FERTILIZERS ---
+      function openFertilizerModal(index = null) {
+        const isEdit = index !== null;
+        document.getElementById('fertilizer-modal-title').textContent = isEdit ? 'تعديل المادة' : 'إضافة مادة جديدة';
+        
+        if (isEdit) {
+          const f = inventoryData.fertilizers[index];
+          document.getElementById('fert-id').value = index;
+          document.getElementById('fert-name').value = f.name;
+          document.getElementById('fert-type').value = f.type || 'سماد';
+          document.getElementById('fert-min').value = f.minThreshold || 0;
+          document.getElementById('fert-qty').value = f.quantity || 0;
+          document.getElementById('fert-unit').value = f.unit || '';
+          document.getElementById('fert-notes').value = f.notes || '';
+        } else {
+          document.getElementById('fert-id').value = '';
+          document.getElementById('fert-name').value = '';
+          document.getElementById('fert-type').value = 'سماد';
+          document.getElementById('fert-min').value = '';
+          document.getElementById('fert-qty').value = '';
+          document.getElementById('fert-unit').value = '';
+          document.getElementById('fert-notes').value = '';
+        }
+        openModal('modal-fertilizer');
+      }
+
+      function editFertilizer(index) { openFertilizerModal(index); }
+
+      async function saveFertilizer() {
+        const indexVal = document.getElementById('fert-id').value;
+        const isNew = indexVal === '';
+
+        const newFert = {
+          id: isNew ? 'fert_' + Date.now() : inventoryData.fertilizers[indexVal].id,
+          name: document.getElementById('fert-name').value,
+          type: document.getElementById('fert-type').value,
+          minThreshold: parseFloat(document.getElementById('fert-min').value) || 0,
+          quantity: parseFloat(document.getElementById('fert-qty').value) || 0,
+          unit: document.getElementById('fert-unit').value,
+          notes: document.getElementById('fert-notes').value
+        };
+
+        if (!newFert.name) { showToast('اسم المادة مطلوب', 'error'); return; }
+
+        if (isNew) {
+          inventoryData.fertilizers.push(newFert);
+        } else {
+          inventoryData.fertilizers[indexVal] = newFert;
+        }
+
+        await saveInventory();
+        closeModal('modal-fertilizer');
+      }
+
+      async function deleteFertilizer(index) {
+        if (!confirm('هل أنت متأكد من حذف هذه المادة؟')) return;
+        inventoryData.fertilizers.splice(index, 1);
+        await saveInventory();
+      }
+
+      async function saveInventory() {
+        try {
+          const res = await fetch('/api/inventory', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(inventoryData)
+          });
+          
+          if (res.ok) {
+            showToast('تم حفظ التغييرات بنجاح', 'success');
+            renderInventoryLists();
+          } else {
+            showToast('حدث خطأ أثناء الحفظ', 'error');
+          }
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في الاتصال', 'error');
+        }
+      }
+
+      // --- UTILS ---
+      function openModal(id) {
+        const el = document.getElementById(id);
+        const panel = document.getElementById(id + '-panel');
+        el.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          panel.classList.remove('scale-95', 'opacity-0');
+        });
+      }
+
+      function closeModal(id) {
+        const el = document.getElementById(id);
+        const panel = document.getElementById(id + '-panel');
+        panel.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+          el.classList.add('hidden');
+        }, 200);
+      }
+
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const colors = {
+          info: 'bg-slate-900 text-white',
+          success: 'bg-emerald-600 text-white',
+          error: 'bg-rose-600 text-white',
+        };
+        const icons = {
+          info: 'fa-circle-info',
+          success: 'fa-check',
+          error: 'fa-xmark',
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transform translate-y-10 opacity-0 transition-all duration-300 ${colors[type]}`;
+        toast.innerHTML = `<i class="fa-solid ${icons[type]}"></i> <span class="text-sm font-bold">${message}</span>`;
+        
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
+        
+        setTimeout(() => {
+          toast.classList.add('translate-y-10', 'opacity-0');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      
+    </script>
+  </body>
+</html>

@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>التحكم بالمناخ - إيكو كونترول</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Cairo', 'sans-serif'] },
+            colors: {
+              primary: '#059669', // Emerald 600
+              secondary: '#475569',
+              success: '#059669',
+              danger: '#dc2626',
+              warning: '#d97706',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #f1f5f9; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      .glass {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
+      .fade-in { animation: fadeIn 0.5s ease-in-out; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-800 font-sans min-h-screen selection:bg-primary selection:text-white">
+    
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-leaf text-xl"></i>
+            </div>
+            <span class="font-bold text-2xl tracking-tight text-emerald-900">إيكو كونترول</span>
+          </div>
+          <div class="hidden md:flex items-center gap-8">
+            <a href="/" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الرئيسية</a>
+            <a href="/climate.html" class="text-base font-bold text-primary">التحكم بالمناخ</a>
+            <a href="/irrigation.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">نظام الري</a>
+            <a href="/inventory.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">المخزون</a>
+            <button onclick="openAIPage()" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الذكاء الاصطناعي</button>
+            <a id="adminLink" href="/admin.html" class="hidden text-base font-medium text-slate-600 hover:text-primary transition-colors">الإدارة</a>
+            <button id="logoutBtn" class="hidden px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">خروج</button>
+          </div>
+          <button id="mobile-menu-btn" class="md:hidden text-slate-600 text-xl p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white/95 backdrop-blur-lg">
+        <div class="px-4 py-4 space-y-2">
+          <a href="/" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الرئيسية</a>
+          <a href="/climate.html" class="block px-4 py-3 text-base font-bold text-primary bg-green-50 rounded-xl">التحكم بالمناخ</a>
+          <a href="/irrigation.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">نظام الري</a>
+          <a href="/inventory.html" class="block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">المخزون</a>
+          <button onclick="openAIPage()" class="w-full text-right block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الذكاء الاصطناعي</button>
+          <a id="adminLinkMobile" href="/admin.html" class="hidden block px-4 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">الإدارة</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-28 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      
+      <!-- Header Section -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in">
+        <div>
+          <h1 class="text-3xl font-bold text-emerald-900 mb-2">التحكم بالمناخ</h1>
+          <p class="text-slate-500 font-medium">مراقبة الحرارة والرطوبة، والتحكم بالأجهزة آلياً أو يدوياً.</p>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div id="disconnection-alert" class="hidden fade-in">
+        <div class="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-sm">
+          <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+          <div>
+            <p class="font-bold">انقطع الاتصال</p>
+            <p class="text-sm opacity-90">لا يمكن الوصول إلى جهاز ESP32. جاري محاولة الاتصال...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sensor Grid -->
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
+        <!-- Temperature Card -->
+        <div class="card glass rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+          <div class="absolute top-0 left-0 p-4 sm:p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+            <i class="fa-solid fa-temperature-high text-5xl sm:text-7xl text-orange-500"></i>
+          </div>
+          <div class="relative z-10">
+            <p class="text-xs sm:text-sm font-bold text-orange-600 uppercase tracking-wider mb-1">درجة الحرارة</p>
+            <div class="flex items-baseline gap-2" dir="ltr">
+              <h2 id="temperature" class="text-4xl sm:text-5xl font-bold text-slate-800">--</h2>
+              <span class="text-xl sm:text-2xl text-slate-400">°C</span>
+            </div>
+          </div>
+          <div class="mt-4 sm:mt-6 h-2 w-full bg-orange-50 rounded-full overflow-hidden">
+            <div class="h-full bg-orange-500 w-1/2 rounded-full"></div>
+          </div>
+        </div>
+
+        <!-- Humidity Card -->
+        <div class="card glass rounded-3xl p-4 sm:p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+          <div class="absolute top-0 left-0 p-4 sm:p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+            <i class="fa-solid fa-droplet text-5xl sm:text-7xl text-sky-500"></i>
+          </div>
+          <div class="relative z-10">
+            <p class="text-xs sm:text-sm font-bold text-sky-600 uppercase tracking-wider mb-1">الرطوبة</p>
+            <div class="flex items-baseline gap-2" dir="ltr">
+              <h2 id="humidity" class="text-4xl sm:text-5xl font-bold text-slate-800">--</h2>
+              <span class="text-xl sm:text-2xl text-slate-400">%</span>
+            </div>
+          </div>
+          <div class="mt-4 sm:mt-6 h-2 w-full bg-sky-50 rounded-full overflow-hidden">
+            <div class="h-full bg-sky-500 w-2/3 rounded-full"></div>
+          </div>
+        </div>
+
+        <!-- System Info Card -->
+        <div class="card glass rounded-3xl p-6 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+          <div class="absolute top-0 left-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+            <i class="fa-solid fa-microchip text-7xl text-emerald-500"></i>
+          </div>
+          <div class="relative z-10">
+             <p class="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-3">حالة النظام</p>
+             <div class="space-y-4 mt-2">
+               <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                 <span class="text-sm font-medium text-slate-600">معرف الجهاز</span>
+                 <span id="device-id" class="font-mono text-sm font-bold bg-slate-100 px-3 py-1 rounded-lg text-primary">--</span>
+               </div>
+               <div class="flex justify-between items-center">
+                 <span class="text-sm font-medium text-slate-600">آخر تحديث</span>
+                 <span id="sensor-updated" class="text-xs text-slate-500 font-mono">جاري الانتظار...</span>
+               </div>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Setpoint Mode Card -->
+      <section class="fade-in">
+        <div class="card glass rounded-3xl p-6 md:p-8 shadow-sm border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                <i class="fa-solid fa-crosshairs text-2xl"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-slate-900">وضع القيم المستهدفة</h2>
+                <p class="text-sm text-slate-500">حدد درجة الحرارة والرطوبة المطلوبة ودع النظام يتحكم تلقائياً</p>
+              </div>
+            </div>
+            
+            <!-- Toggle Switch -->
+            <div class="flex items-center gap-3">
+              <span id="setpoint-status-text" class="text-sm font-bold text-slate-500">معطّل</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setpoint-toggle" class="sr-only peer">
+                <div class="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Setpoint Controls -->
+          <div id="setpoint-controls" class="grid grid-cols-1 md:grid-cols-2 gap-6 opacity-50 pointer-events-none transition-opacity">
+            <!-- Temperature Setpoint -->
+            <div class="p-5 bg-white rounded-2xl border border-orange-200 shadow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
+                  <i class="fa-solid fa-temperature-half text-lg"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-slate-700">درجة الحرارة المستهدفة</h3>
+                  <p class="text-xs text-slate-400">النظام سيعمل للوصول لهذه الدرجة</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <input type="range" id="target-temp-slider" min="15" max="40" value="25" step="0.5"
+                  class="flex-1 h-2 bg-orange-100 rounded-lg appearance-none cursor-pointer accent-orange-500">
+                <div class="flex items-center gap-1 bg-orange-50 px-4 py-2 rounded-xl border border-orange-200">
+                  <input type="number" id="target-temp-input" value="25" min="15" max="40" step="0.5"
+                    class="w-14 text-center text-xl font-bold text-orange-600 bg-transparent outline-none" dir="ltr">
+                  <span class="text-orange-400 font-bold">°C</span>
+                </div>
+              </div>
+              <div class="mt-3 flex items-center gap-2">
+                <span class="text-xs text-slate-400">هامش التسامح:</span>
+                <select id="temp-tolerance" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none">
+                  <option value="1">±1°C</option>
+                  <option value="2" selected>±2°C</option>
+                  <option value="3">±3°C</option>
+                  <option value="5">±5°C</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Humidity Setpoint -->
+            <div class="p-5 bg-white rounded-2xl border border-sky-200 shadow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600">
+                  <i class="fa-solid fa-droplet text-lg"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-slate-700">نسبة الرطوبة المستهدفة</h3>
+                  <p class="text-xs text-slate-400">النظام سيعمل للوصول لهذه النسبة</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <input type="range" id="target-hum-slider" min="20" max="90" value="60" step="1"
+                  class="flex-1 h-2 bg-sky-100 rounded-lg appearance-none cursor-pointer accent-sky-500">
+                <div class="flex items-center gap-1 bg-sky-50 px-4 py-2 rounded-xl border border-sky-200">
+                  <input type="number" id="target-hum-input" value="60" min="20" max="90" step="1"
+                    class="w-14 text-center text-xl font-bold text-sky-600 bg-transparent outline-none" dir="ltr">
+                  <span class="text-sky-400 font-bold">%</span>
+                </div>
+              </div>
+              <div class="mt-3 flex items-center gap-2">
+                <span class="text-xs text-slate-400">هامش التسامح:</span>
+                <select id="hum-tolerance" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none">
+                  <option value="3">±3%</option>
+                  <option value="5" selected>±5%</option>
+                  <option value="10">±10%</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Save Button -->
+          <div id="setpoint-save-section" class="mt-6 flex justify-end opacity-50 pointer-events-none transition-opacity">
+            <button id="save-setpoint" class="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+              <i class="fa-solid fa-check"></i>
+              حفظ الإعدادات
+            </button>
+          </div>
+          
+          <!-- Info Box when disabled -->
+          <div id="setpoint-info" class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm">
+            <div class="flex items-start gap-3">
+              <i class="fa-solid fa-info-circle text-lg mt-0.5"></i>
+              <div>
+                <p class="font-bold mb-1">كيف يعمل هذا الوضع؟</p>
+                <p class="text-amber-600">عند التفعيل، سيتحكم النظام تلقائياً بالمروحة والسخان ومحرك الباب للوصول لدرجة الحرارة المحددة، وبمضخة الماء للوصول للرطوبة المحددة. هذا الوضع يحل محل قواعد الأتمتة اليدوية.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Relay Status Table -->
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 fade-in">
+        
+        <!-- Relays Card -->
+        <div class="card glass rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-slate-900">أجهزة التحكم (Relays)</h2>
+            <span class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">الحالة والتحكم</span>
+          </div>
+          
+          <!-- تنبيه عند تفعيل وضع القيم المستهدفة -->
+          <div id="setpoint-relay-warning" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-sm">
+            <div class="flex items-start gap-2">
+              <i class="fa-solid fa-info-circle text-base mt-0.5"></i>
+              <p class="font-medium">التحكم اليدوي معطّل. النظام يعمل تلقائياً للوصول للقيم المستهدفة.</p>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse min-w-[500px]">
+              <thead>
+                <tr class="border-b border-slate-200 text-xs uppercase text-slate-500 font-bold tracking-wider">
+                  <th class="p-3 sm:p-4">الجهاز</th>
+                  <th class="p-3 sm:p-4">الحالة</th>
+                  <th class="p-3 sm:p-4">الوضع</th>
+                  <th class="p-3 sm:p-4 text-left">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="relay-table" class="divide-y divide-slate-100 text-sm font-medium">
+                <!-- JS Populated -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Mobile hint -->
+          <div class="sm:hidden px-4 py-2 text-xs text-slate-400 text-center bg-slate-50 border-t border-slate-100">
+            <i class="fa-solid fa-arrows-left-right ml-1"></i> مرر للتحكم
+          </div>
+        </div>
+
+        <!-- Automation Thresholds Card -->
+        <div class="card glass rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-slate-900">قواعد الأتمتة</h2>
+            <span class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">حدود التشغيل</span>
+          </div>
+
+          <!-- تنبيه عند تفعيل وضع القيم المستهدفة -->
+          <div id="setpoint-thresholds-warning" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-sm">
+            <div class="flex items-start gap-2">
+              <i class="fa-solid fa-info-circle text-base mt-0.5"></i>
+              <p class="font-medium">قواعد الأتمتة معطلة. النظام يستخدم وضع القيم المستهدفة.</p>
+            </div>
+          </div>
+
+          <div id="thresholds-container">
+            <form id="threshold-form" class="space-y-6">
+              <!-- Dynamic Inputs -->
+            </form>
+
+            <div class="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
+              <button id="reset-thresholds" type="button" class="text-sm text-slate-500 hover:text-slate-700 underline transition-colors">
+                استعادة الافتراضي
+              </button>
+              <button id="save-thresholds" type="button" class="px-8 py-2.5 bg-primary hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95">
+                حفظ القواعد
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 left-6 z-50 flex flex-col gap-3" dir="rtl"></div>
+
+    <footer class="border-t border-slate-200 bg-white/50 py-8 mt-12">
+      <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm font-medium">
+        <p>© 2025 إيكو كونترول. وحدة التحكم بالمناخ.</p>
+      </div>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+      // === Elements & State ===
+      const relayTableBody = document.getElementById('relay-table');
+      const temperatureEl = document.getElementById('temperature');
+      const humidityEl = document.getElementById('humidity');
+      const deviceIdEl = document.getElementById('device-id');
+      const sensorUpdatedEl = document.getElementById('sensor-updated');
+      const disconnectionAlert = document.getElementById('disconnection-alert');
+      const connectionStatus = document.getElementById('connection-status');
+
+      const RELAY_ICONS = {
+        fan: '<i class="fa-solid fa-fan"></i>',
+        motor: '<i class="fa-solid fa-door-open"></i>',
+        pump: '<i class="fa-solid fa-faucet-drip"></i>',
+        heater: '<i class="fa-solid fa-fire"></i>',
+      };
+      
+      const RELAY_NAMES_AR = {
+        fan: 'المروحة',
+        motor: 'محرك الباب',
+        pump: 'مضخة الماء',
+        heater: 'السخان',
+      };
+
+      // === Utils ===
+      function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        
+        const colors = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-blue-600');
+        const icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-info');
+
+        toast.className = `${colors} text-white px-6 py-4 rounded-2xl shadow-lg shadow-gray-900/10 flex items-center gap-4 min-w-[300px] transform transition-all duration-300 translate-y-10 opacity-0`;
+        toast.innerHTML = `
+          <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid ${icon} text-sm"></i>
+          </div>
+          <span class="text-base font-bold">${message}</span>
+        `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-10', 'opacity-0');
+        });
+
+        // Remove after 3s
+        setTimeout(() => {
+          toast.classList.add('opacity-0', '-translate-x-full');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      function formatNumber(value) {
+        if (value === null || value === undefined || Number.isNaN(value)) return '--';
+        return Number(value).toLocaleString('en-US', { maximumFractionDigits: 1 });
+      }
+
+      function formatTimestamp(ts) {
+        if (!ts) return 'أبدًا';
+        return new Date(ts).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+
+      // === Fetch & Render ===
+      let latestThresholds = {};
+      let defaultThresholds = {};
+
+      async function fetchStatus() {
+        try {
+          const response = await fetch('/api/status');
+          if (!response.ok) throw new Error('Server Error');
+          const payload = await response.json();
+          
+          updateSensorDisplay(payload.sensor);
+          updateRelayTable(payload.relays);
+          updateThresholdsForm(payload.thresholds);
+        } catch (error) {
+          console.error('Status fetch error:', error);
+        }
+      }
+
+      function updateThresholdsForm(thresholds) {
+        if (Object.keys(defaultThresholds).length === 0) {
+          defaultThresholds = JSON.parse(JSON.stringify(thresholds));
+        }
+        
+        const container = document.getElementById('threshold-form');
+        if (container.children.length > 0 && JSON.stringify(thresholds) === JSON.stringify(latestThresholds)) return;
+        
+        latestThresholds = thresholds;
+        container.innerHTML = '';
+
+        Object.entries(thresholds).forEach(([key, config]) => {
+           const div = document.createElement('div');
+           div.className = "p-5 bg-slate-50/50 rounded-2xl border border-slate-200";
+           
+           const icon = RELAY_ICONS[key] || '';
+           const name = RELAY_NAMES_AR[key] || key;
+           
+           div.innerHTML = `
+             <div class="flex items-center gap-3 mb-4">
+               <span class="text-slate-400 text-lg">${icon}</span>
+               <h3 class="font-bold text-slate-700">تحكم ${name}</h3>
+             </div>
+             
+             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+               <div class="space-y-2">
+                 <label class="text-xs font-bold text-slate-500">شرط التشغيل</label>
+                 <select name="${key}-comparison" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                   <option value="above" ${config.comparison === 'above' ? 'selected' : ''}>أعلى من الحد</option>
+                   <option value="below" ${config.comparison === 'below' ? 'selected' : ''}>أقل من الحد</option>
+                 </select>
+               </div>
+               
+               <div class="grid grid-cols-2 gap-3">
+                 <div class="space-y-2">
+                   <label class="text-xs font-bold text-slate-500">تشغيل عند</label>
+                   <input type="number" name="${key}-on" value="${config.on}" step="0.1" 
+                     class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" dir="ltr">
+                 </div>
+                 <div class="space-y-2">
+                   <label class="text-xs font-bold text-slate-500">إيقاف عند</label>
+                   <input type="number" name="${key}-off" value="${config.off}" step="0.1" 
+                     class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" dir="ltr">
+                 </div>
+               </div>
+             </div>
+           `;
+           container.appendChild(div);
+        });
+      }
+
+      document.getElementById('save-thresholds').addEventListener('click', async () => {
+        // منع حفظ قواعد الأتمتة عند تفعيل وضع القيم المستهدفة
+        if (setpointToggle.checked) {
+          showToast('قواعد الأتمتة معطلة. قم بإلغاء وضع القيم المستهدفة أولاً.', 'error');
+          return;
+        }
+        
+        const formData = new FormData(document.getElementById('threshold-form'));
+        const payload = {};
+        
+        for (let [key, value] of formData.entries()) {
+           const [relay, field] = key.split('-');
+           if(!payload[relay]) payload[relay] = {};
+           payload[relay][field] = field === 'comparison' ? value : parseFloat(value);
+        }
+
+        try {
+          const res = await fetch('/api/thresholds', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          if(res.ok) {
+             showToast('تم حفظ القواعد بنجاح');
+             fetchStatus();
+          } else {
+             showToast('فشل حفظ القواعد', 'error');
+          }
+        } catch(e) {
+          showToast('خطأ في الاتصال', 'error');
+        }
+      });
+
+      document.getElementById('reset-thresholds').addEventListener('click', () => {
+        // منع استعادة القيم الافتراضية عند تفعيل وضع القيم المستهدفة
+        if (setpointToggle.checked) {
+          showToast('قواعد الأتمتة معطلة. قم بإلغاء وضع القيم المستهدفة أولاً.', 'error');
+          return;
+        }
+        
+        updateThresholdsForm(defaultThresholds);
+        showToast('تمت استعادة القيم الافتراضية (غير محفوظة)', 'info');
+      });
+
+      function updateSensorDisplay(sensor) {
+        const connected = sensor?.connected ?? false;
+        const temp = sensor?.temperature;
+        const hum = sensor?.humidity;
+
+        document.getElementById('temperature').textContent = formatNumber(temp);
+        document.getElementById('humidity').textContent = formatNumber(hum);
+        document.getElementById('device-id').textContent = sensor?.deviceId ?? '--';
+        
+        if (sensor?.updatedAt) {
+          sensorUpdatedEl.textContent = formatTimestamp(sensor.updatedAt);
+        }
+
+        // Update Connection UI
+        if (connected) {
+          disconnectionAlert.classList.add('hidden');
+        } else {
+          disconnectionAlert.classList.remove('hidden');
+        }
+      }
+
+      function updateRelayTable(relays) {
+        relayTableBody.innerHTML = '';
+        const setpointEnabled = setpointToggle.checked;
+        
+        Object.entries(relays || {}).forEach(([relayId, relay]) => {
+          const row = document.createElement('tr');
+          const icon = RELAY_ICONS[relayId] || '<i class="fa-solid fa-plug"></i>';
+          const name = RELAY_NAMES_AR[relayId] || relay.label || relayId;
+          
+          const isOn = relay.state;
+          const isManual = relay.mode === 'manual';
+          const isDisabled = setpointEnabled; // تعطيل الأزرار عند تفعيل وضع القيم المستهدفة
+
+          row.innerHTML = `
+            <td class="p-3 sm:p-4 font-bold text-slate-700">
+              <div class="flex items-center gap-2 sm:gap-4">
+                <span class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 text-sm sm:text-lg flex-shrink-0">
+                  ${icon}
+                </span>
+                <span class="text-sm sm:text-base">${name}</span>
+              </div>
+            </td>
+            <td class="p-3 sm:p-4">
+              <span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold ${isOn ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">
+                ${isOn ? 'نشط' : 'متوقف'}
+              </span>
+            </td>
+            <td class="p-3 sm:p-4">
+              <span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold ${isManual ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}">
+                ${isManual ? 'يدوي' : 'آلي'}
+              </span>
+            </td>
+            <td class="p-3 sm:p-4 text-left">
+              <div class="flex flex-wrap gap-1 sm:gap-2 justify-end">
+                <button onclick="setRelayMode('${relayId}', 'auto')" class="px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors ${!isManual || isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${!isManual || isDisabled ? 'disabled' : ''}>آلي</button>
+                <button onclick="setRelayMode('${relayId}', 'manual', true)" class="px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-bold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-sm shadow-emerald-200 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${isDisabled ? 'disabled' : ''}>تشغيل</button>
+                <button onclick="setRelayMode('${relayId}', 'manual', false)" class="px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-bold rounded-lg bg-rose-500 hover:bg-rose-600 text-white transition-colors shadow-sm shadow-rose-200 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${isDisabled ? 'disabled' : ''}>إيقاف</button>
+              </div>
+            </td>
+          `;
+          relayTableBody.appendChild(row);
+        });
+      }
+
+      async function setRelayMode(relayId, mode, state) {
+        // منع التحكم اليدوي عند تفعيل وضع القيم المستهدفة
+        if (setpointToggle.checked) {
+          showToast('التحكم اليدوي معطّل. قم بإلغاء وضع القيم المستهدفة أولاً.', 'error');
+          return;
+        }
+        
+        try {
+          await fetch(`/api/relays/${encodeURIComponent(relayId)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode, state }),
+          });
+          fetchStatus();
+          
+          let action = "";
+          if (mode === 'auto') action = "للوضع الآلي";
+          else action = state ? "تشغيل يدوي" : "إيقاف يدوي";
+          
+          showToast(`تم تغيير ${RELAY_NAMES_AR[relayId] || relayId} ${action}`);
+        } catch (err) {
+          showToast('حدث خطأ أثناء التحديث', 'error');
+        }
+      }
+
+      // Loops
+      setInterval(fetchStatus, 5000);
+      fetchStatus();
+
+      // Mobile Menu Toggle
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+          const icon = mobileMenuBtn.querySelector('i');
+          if (mobileMenu.classList.contains('hidden')) {
+            icon.className = 'fa-solid fa-bars';
+          } else {
+            icon.className = 'fa-solid fa-xmark';
+          }
+        });
+      }
+
+      // Authentication Check
+      (function() {
+        const token = localStorage.getItem('eco_token');
+        const user = JSON.parse(localStorage.getItem('eco_user') || '{}');
+        
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const adminLink = document.getElementById('adminLink');
+        const adminLinkMobile = document.getElementById('adminLinkMobile');
+
+        if (logoutBtn) {
+          logoutBtn.classList.remove('hidden');
+          logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('eco_token');
+            localStorage.removeItem('eco_user');
+            window.location.href = '/login.html';
+          });
+        }
+        
+        if (user.role === 'admin') {
+          if (adminLink) adminLink.classList.remove('hidden');
+          if (adminLinkMobile) adminLinkMobile.classList.remove('hidden');
+        }
+      })();
+
+      // AI Page Access Control
+      const AI_PAGE_URL = 'https://planet-ai-nzfk.vercel.app/';
+
+      function openAIPage() {
+        const token = localStorage.getItem('eco_token');
+        
+        if (token) {
+          // User is logged in - open AI page directly
+          window.open(AI_PAGE_URL, '_blank');
+        } else {
+          // User not logged in - save redirect URL and go to login page
+          localStorage.setItem('redirect_after_login', AI_PAGE_URL);
+          window.location.href = '/login.html';
+        }
+      }
+
+      // ========== Setpoint Mode Controls ==========
+      const setpointToggle = document.getElementById('setpoint-toggle');
+      const setpointControls = document.getElementById('setpoint-controls');
+      const setpointSaveSection = document.getElementById('setpoint-save-section');
+      const setpointStatusText = document.getElementById('setpoint-status-text');
+      const setpointInfo = document.getElementById('setpoint-info');
+      
+      const targetTempSlider = document.getElementById('target-temp-slider');
+      const targetTempInput = document.getElementById('target-temp-input');
+      const targetHumSlider = document.getElementById('target-hum-slider');
+      const targetHumInput = document.getElementById('target-hum-input');
+      const tempTolerance = document.getElementById('temp-tolerance');
+      const humTolerance = document.getElementById('hum-tolerance');
+
+      // تحديث حالة الواجهة بناءً على التفعيل
+      function updateSetpointUI(enabled) {
+        const setpointRelayWarning = document.getElementById('setpoint-relay-warning');
+        const setpointThresholdsWarning = document.getElementById('setpoint-thresholds-warning');
+        const thresholdsContainer = document.getElementById('thresholds-container');
+        
+        if (enabled) {
+          setpointControls.classList.remove('opacity-50', 'pointer-events-none');
+          setpointSaveSection.classList.remove('opacity-50', 'pointer-events-none');
+          setpointStatusText.textContent = 'مُفعّل';
+          setpointStatusText.classList.remove('text-slate-500');
+          setpointStatusText.classList.add('text-emerald-600');
+          setpointInfo.classList.add('hidden');
+          // إظهار تنبيه في جدول الـ Relays
+          if (setpointRelayWarning) setpointRelayWarning.classList.remove('hidden');
+          // تعطيل قواعد الأتمتة
+          if (thresholdsContainer) {
+            thresholdsContainer.classList.add('opacity-50', 'pointer-events-none');
+          }
+          if (setpointThresholdsWarning) setpointThresholdsWarning.classList.remove('hidden');
+        } else {
+          setpointControls.classList.add('opacity-50', 'pointer-events-none');
+          setpointSaveSection.classList.add('opacity-50', 'pointer-events-none');
+          setpointStatusText.textContent = 'معطّل';
+          setpointStatusText.classList.remove('text-emerald-600');
+          setpointStatusText.classList.add('text-slate-500');
+          setpointInfo.classList.remove('hidden');
+          // إخفاء تنبيه في جدول الـ Relays
+          if (setpointRelayWarning) setpointRelayWarning.classList.add('hidden');
+          // تفعيل قواعد الأتمتة
+          if (thresholdsContainer) {
+            thresholdsContainer.classList.remove('opacity-50', 'pointer-events-none');
+          }
+          if (setpointThresholdsWarning) setpointThresholdsWarning.classList.add('hidden');
+        }
+      }
+
+      // مزامنة الـ slider مع الـ input
+      targetTempSlider.addEventListener('input', () => {
+        targetTempInput.value = targetTempSlider.value;
+      });
+      targetTempInput.addEventListener('input', () => {
+        targetTempSlider.value = targetTempInput.value;
+      });
+      targetHumSlider.addEventListener('input', () => {
+        targetHumInput.value = targetHumSlider.value;
+      });
+      targetHumInput.addEventListener('input', () => {
+        targetHumSlider.value = targetHumInput.value;
+      });
+
+      // تفعيل/إلغاء الوضع
+      setpointToggle.addEventListener('change', async () => {
+        const enabled = setpointToggle.checked;
+        updateSetpointUI(enabled);
+        
+        // تحديث جدول الـ Relays لتعطيل/تفعيل الأزرار
+        fetchStatus();
+        
+        // حفظ الحالة فوراً
+        try {
+          await fetch('/api/climate/setpoint', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+          });
+          showToast(enabled ? 'تم تفعيل وضع القيم المستهدفة' : 'تم إلغاء وضع القيم المستهدفة');
+        } catch (e) {
+          showToast('خطأ في حفظ الإعدادات', 'error');
+        }
+      });
+
+      // حفظ إعدادات Setpoint
+      document.getElementById('save-setpoint').addEventListener('click', async () => {
+        const payload = {
+          enabled: setpointToggle.checked,
+          targetTemperature: parseFloat(targetTempInput.value),
+          targetHumidity: parseFloat(targetHumInput.value),
+          temperatureTolerance: parseFloat(tempTolerance.value),
+          humidityTolerance: parseFloat(humTolerance.value),
+        };
+
+        try {
+          const res = await fetch('/api/climate/setpoint', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          if (res.ok) {
+            showToast('تم حفظ القيم المستهدفة بنجاح');
+            fetchStatus();
+          } else {
+            const data = await res.json();
+            showToast(data.error || 'فشل حفظ الإعدادات', 'error');
+          }
+        } catch (e) {
+          showToast('خطأ في الاتصال', 'error');
+        }
+      });
+
+      // تحديث واجهة Setpoint من البيانات
+      function updateSetpointDisplay(setpoint) {
+        if (!setpoint) return;
+        
+        setpointToggle.checked = setpoint.enabled;
+        updateSetpointUI(setpoint.enabled);
+        
+        targetTempSlider.value = setpoint.targetTemperature;
+        targetTempInput.value = setpoint.targetTemperature;
+        targetHumSlider.value = setpoint.targetHumidity;
+        targetHumInput.value = setpoint.targetHumidity;
+        
+        tempTolerance.value = setpoint.temperatureTolerance;
+        humTolerance.value = setpoint.humidityTolerance;
+      }
+
+      // تعديل fetchStatus لتحديث Setpoint أيضاً
+      const originalFetchStatus = fetchStatus;
+      fetchStatus = async function() {
+        try {
+          const response = await fetch('/api/status');
+          if (!response.ok) throw new Error('Server Error');
+          const payload = await response.json();
+          
+          updateSensorDisplay(payload.sensor);
+          updateRelayTable(payload.relays);
+          updateThresholdsForm(payload.thresholds);
+          updateSetpointDisplay(payload.setpoint);
+        } catch (error) {
+          console.error('Status fetch error:', error);
+        }
+      };
+    </script>
+  </body>
+</html>

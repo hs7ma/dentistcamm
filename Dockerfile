@@ -1,29 +1,15 @@
-# ══════════════════════════════════════════════
-#  Stage 1: Build frontend
-# ══════════════════════════════════════════════
-FROM node:18-alpine AS builder
-
-WORKDIR /app/frontend
-
-COPY frontend/package*.json ./
-RUN npm ci
-
-COPY frontend/ ./
-RUN npm run build
-
-# ══════════════════════════════════════════════
-#  Stage 2: Production server
-# ══════════════════════════════════════════════
 FROM node:18-alpine
 
 WORKDIR /app
 
-COPY backend/package*.json ./backend/
-RUN cd backend && npm ci --omit=dev
+COPY package.json package-lock.json* ./
+RUN npm install --production
 
-COPY backend/ ./backend/
-COPY --from=builder /app/frontend/dist ./frontend/dist
+COPY . .
 
-EXPOSE 8000
+EXPOSE 3000
 
-CMD ["node", "backend/server.js"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/version || exit 1
+
+CMD ["node", "server.js"]

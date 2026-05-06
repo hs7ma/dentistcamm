@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>التحكم بالمناخ - إيكو كونترول</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Cairo', 'sans-serif'] },
+            colors: {
+              primary: '#059669',
+              secondary: '#475569',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .glass {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
+      .fade-in { animation: fadeIn 0.5s ease-in-out; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      /* Tailwind Safelist - dynamic classes used in JS:
+         border-blue-500 border-purple-500 border-cyan-500 border-orange-500 border-teal-500
+         bg-blue-100 bg-purple-100 bg-cyan-100 bg-orange-100 bg-teal-100
+         text-blue-600 text-purple-600 text-cyan-600 text-orange-600 text-teal-600
+         text-blue-700 text-purple-700 text-cyan-700 text-orange-700 text-teal-700
+         bg-blue-100 bg-purple-100 bg-cyan-100 bg-orange-100 bg-teal-100
+      */
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-800 font-sans min-h-screen">
+    
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-leaf text-xl"></i>
+            </div>
+            <span class="font-bold text-2xl tracking-tight text-emerald-900">إيكو كونترول</span>
+          </div>
+          <div class="hidden md:flex items-center gap-8">
+            <a href="/" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الرئيسية</a>
+            <a href="/climate.html" class="text-base font-bold text-primary">التحكم بالمناخ</a>
+            <a href="/irrigation.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">نظام الري</a>
+            <a href="/inventory.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">المخزون</a>
+            <a href="/ai.html" class="text-base font-medium text-slate-600 hover:text-primary transition-colors">الذكاء الاصطناعي</a>
+            <a id="adminLink" href="/admin.html" class="hidden text-base font-medium text-slate-600 hover:text-primary transition-colors">الإدارة</a>
+            <button id="logoutBtn" class="hidden px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">خروج</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-28 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      
+      <!-- Header -->
+      <div class="fade-in">
+        <h1 class="text-3xl font-bold text-emerald-900 mb-2">التحكم بالمناخ</h1>
+        <p class="text-slate-500 font-medium">اختر وضع التشغيل: آلي (النظام يتحكم) أو يدوي (أنت تتحكم)</p>
+      </div>
+
+      <!-- Sensor Cards -->
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
+        <!-- Temperature -->
+        <div class="glass rounded-3xl p-6 relative overflow-hidden group shadow-sm border border-slate-100">
+          <div class="absolute top-0 left-0 p-6 opacity-10">
+            <i class="fa-solid fa-temperature-high text-7xl text-orange-500"></i>
+          </div>
+          <div class="relative z-10">
+            <p class="text-sm font-bold text-orange-600 uppercase tracking-wider mb-1">درجة الحرارة</p>
+            <div class="flex items-baseline gap-2" dir="ltr">
+              <h2 id="temperature" class="text-5xl font-bold text-slate-800">--</h2>
+              <span class="text-2xl text-slate-400">°C</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Humidity -->
+        <div class="glass rounded-3xl p-6 relative overflow-hidden group shadow-sm border border-slate-100">
+          <div class="absolute top-0 left-0 p-6 opacity-10">
+            <i class="fa-solid fa-droplet text-7xl text-sky-500"></i>
+          </div>
+          <div class="relative z-10">
+            <p class="text-sm font-bold text-sky-600 uppercase tracking-wider mb-1">الرطوبة</p>
+            <div class="flex items-baseline gap-2" dir="ltr">
+              <h2 id="humidity" class="text-5xl font-bold text-slate-800">--</h2>
+              <span class="text-2xl text-slate-400">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="glass rounded-3xl p-6 relative overflow-hidden group shadow-sm border border-slate-100">
+          <div class="absolute top-0 left-0 p-6 opacity-10">
+            <i class="fa-solid fa-microchip text-7xl text-emerald-500"></i>
+          </div>
+          <div class="relative z-10">
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-3">حالة النظام</p>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-slate-600">الوضع الحالي</span>
+                <span id="current-mode" class="text-sm font-bold bg-slate-100 px-3 py-1 rounded-lg text-primary">--</span>
+              </div>
+              <div id="manual-badge" class="hidden">
+                <div class="bg-amber-100 border-2 border-amber-400 rounded-xl p-3 text-center">
+                  <div class="flex items-center justify-center gap-2 mb-1">
+                    <i class="fa-solid fa-hand text-amber-600"></i>
+                    <span class="font-bold text-amber-700 text-sm">تحكم يدوي محلي</span>
+                  </div>
+                  <p class="text-xs text-amber-600">أطفئ جميع المفاتيح الفيزيائية للعودة للتحكم عن بعد</p>
+                </div>
+              </div>
+              <div id="switches-display" class="hidden flex flex-wrap gap-1 justify-center"></div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-slate-600">آخر تحديث</span>
+                <span id="sensor-updated" class="text-xs text-slate-500 font-mono">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Door Control Section -->
+      <section class="fade-in">
+        <div class="glass rounded-3xl p-8 shadow-sm border-2 border-teal-200 bg-gradient-to-br from-teal-50/40 to-white">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+
+            <!-- Title & Status -->
+            <div class="flex items-center gap-5">
+              <div id="door-icon-wrap" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg transition-all bg-slate-200 text-slate-500">
+                <i class="fa-solid fa-door-closed"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-slate-900 mb-1">باب التبريد</h2>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-slate-500">الحالة:</span>
+                  <span id="door-status-text" class="text-sm font-bold text-slate-400">جاري التحميل...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="flex gap-3 w-full md:w-auto">
+              <button id="door-open-btn" onclick="setRelayState('door', true)" data-relay-control
+                class="flex-1 md:flex-none px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-600 text-white shadow-md shadow-teal-500/25">
+                <i class="fa-solid fa-door-open"></i>
+                فتح الباب
+              </button>
+              <button id="door-close-btn" onclick="setRelayState('door', false)" data-relay-control
+                class="flex-1 md:flex-none px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 bg-slate-500 hover:bg-slate-600 text-white shadow-md shadow-slate-500/25">
+                <i class="fa-solid fa-door-closed"></i>
+                إغلاق الباب
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mode Selection -->
+      <section class="fade-in">
+        <div class="glass rounded-3xl p-8 shadow-sm border-2 border-emerald-200">
+          <h2 class="text-2xl font-bold text-slate-900 mb-6 text-center">اختر وضع التشغيل</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Auto Mode Button -->
+            <button id="btn-auto-mode" onclick="switchToAutoMode()" class="p-8 rounded-2xl border-3 border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 transition-all group">
+              <div class="flex flex-col items-center gap-4">
+                <div class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-robot text-4xl"></i>
+                </div>
+                <div class="text-center">
+                  <h3 class="text-2xl font-bold text-emerald-900 mb-2">تشغيل آلي</h3>
+                  <p class="text-slate-600 text-sm">النظام يتحكم تلقائياً للوصول للقيم المستهدفة</p>
+                </div>
+              </div>
+            </button>
+
+            <!-- Manual Mode Button -->
+            <button id="btn-manual-mode" onclick="switchToManualModeAndDisable()" class="p-8 rounded-2xl border-3 border-slate-300 bg-white hover:bg-slate-50 transition-all group">
+              <div class="flex flex-col items-center gap-4">
+                <div class="w-20 h-20 bg-gradient-to-br from-slate-500 to-slate-600 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-hand-pointer text-4xl"></i>
+                </div>
+                <div class="text-center">
+                  <h3 class="text-2xl font-bold text-slate-900 mb-2">تشغيل يدوي</h3>
+                  <p class="text-slate-600 text-sm">أنت تتحكم بكل جهاز بشكل منفصل</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Auto Mode Section -->
+      <section id="auto-mode-section" class="hidden fade-in">
+        <div class="glass rounded-3xl p-8 shadow-sm border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                <i class="fa-solid fa-robot text-2xl"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-slate-900">الوضع الآلي</h2>
+                <p class="text-sm text-slate-500">حدد القيم المستهدفة ودع النظام يعمل</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Target Values -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Temperature Target -->
+            <div class="p-5 bg-white rounded-2xl border border-orange-200 shadow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
+                  <i class="fa-solid fa-temperature-half text-lg"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-slate-700">درجة الحرارة المستهدفة</h3>
+                  <p class="text-xs text-slate-400">النظام سيعمل للوصول لهذه الدرجة</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <input type="range" id="target-temp-slider" min="15" max="40" value="25" step="0.5"
+                  class="flex-1 h-2 bg-orange-100 rounded-lg appearance-none cursor-pointer accent-orange-500">
+                <div class="flex items-center gap-1 bg-orange-50 px-4 py-2 rounded-xl border border-orange-200">
+                  <input type="number" id="target-temp-input" value="25" min="15" max="40" step="0.5"
+                    class="w-14 text-center text-xl font-bold text-orange-600 bg-transparent outline-none" dir="ltr">
+                  <span class="text-orange-400 font-bold">°C</span>
+                </div>
+              </div>
+              <div class="mt-3 flex items-center gap-2">
+                <span class="text-xs text-slate-400">هامش التسامح:</span>
+                <select id="temp-tolerance" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none">
+                  <option value="1">±1°C</option>
+                  <option value="2" selected>±2°C</option>
+                  <option value="3">±3°C</option>
+                  <option value="5">±5°C</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Humidity Target -->
+            <div class="p-5 bg-white rounded-2xl border border-sky-200 shadow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600">
+                  <i class="fa-solid fa-droplet text-lg"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-slate-700">نسبة الرطوبة المستهدفة</h3>
+                  <p class="text-xs text-slate-400">النظام سيعمل للوصول لهذه النسبة</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <input type="range" id="target-hum-slider" min="20" max="90" value="60" step="1"
+                  class="flex-1 h-2 bg-sky-100 rounded-lg appearance-none cursor-pointer accent-sky-500">
+                <div class="flex items-center gap-1 bg-sky-50 px-4 py-2 rounded-xl border border-sky-200">
+                  <input type="number" id="target-hum-input" value="60" min="20" max="90" step="1"
+                    class="w-14 text-center text-xl font-bold text-sky-600 bg-transparent outline-none" dir="ltr">
+                  <span class="text-sky-400 font-bold">%</span>
+                </div>
+              </div>
+              <div class="mt-3 flex items-center gap-2">
+                <span class="text-xs text-slate-400">هامش التسامح:</span>
+                <select id="hum-tolerance" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none">
+                  <option value="3">±3%</option>
+                  <option value="5" selected>±5%</option>
+                  <option value="10">±10%</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="flex justify-end">
+            <button id="save-auto-settings" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 flex items-center gap-2">
+              <i class="fa-solid fa-check"></i>
+              تفعيل الوضع الآلي
+            </button>
+          </div>
+
+          <!-- Info -->
+          <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-sm">
+            <div class="flex items-start gap-3">
+              <i class="fa-solid fa-info-circle text-lg mt-0.5"></i>
+              <p>في الوضع الآلي، سيتحكم النظام تلقائياً بالمروحة والسخان والإضاءة والمضخة للوصول للقيم المستهدفة. لن تتمكن من التحكم اليدوي حتى تعود للوضع اليدوي.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Devices Status in Auto Mode -->
+        <div class="glass rounded-3xl p-8 shadow-sm border border-slate-100 mt-6">
+          <h3 class="text-xl font-bold text-slate-900 mb-4">حالة الأجهزة (يتحكم بها النظام)</h3>
+          <div id="auto-devices-status" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Will be populated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Manual Mode Section -->
+      <section id="manual-mode-section" class="hidden fade-in">
+        <div class="glass rounded-3xl p-8 shadow-sm border-2 border-slate-200">
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 bg-gradient-to-br from-slate-500 to-slate-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-hand-pointer text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">الوضع اليدوي</h2>
+              <p class="text-sm text-slate-500">تحكم بكل جهاز بشكل منفصل</p>
+            </div>
+          </div>
+
+          <!-- Devices Grid -->
+          <div id="manual-devices-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Will be populated by JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 left-6 z-50 flex flex-col gap-3" dir="rtl"></div>
+
+    <!-- JavaScript -->
+    <script>
+      // === Configuration ===
+      const RELAY_ICONS = {
+        fan: '<i class="fa-solid fa-fan"></i>',
+        motor: '<i class="fa-solid fa-lightbulb"></i>',
+        pump: '<i class="fa-solid fa-faucet-drip"></i>',
+        heater: '<i class="fa-solid fa-fire"></i>',
+        door: '<i class="fa-solid fa-door-open"></i>',
+      };
+
+      const RELAY_NAMES_AR = {
+        fan: 'المراوح',
+        motor: 'الإضاءة',
+        pump: 'مضخة الماء',
+        heater: 'السخان',
+        door: 'باب التبريد',
+      };
+
+      const RELAY_COLORS = {
+        fan: 'blue',
+        motor: 'purple',
+        pump: 'cyan',
+        heater: 'orange',
+        door: 'teal',
+      };
+
+      // === State ===
+let currentMode = null; // 'auto' or 'manual'
+
+      let relaysData = {};
+
+      let sensorData = {};
+
+      let _physicalManualMode = false;
+
+      let isEditingSetpoint = false;
+      let stopEditingTimeout = null;
+
+      // === Utility Functions ===
+      function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        
+        const colors = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-blue-600');
+        const icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-info');
+
+        toast.className = `${colors} text-white px-6 py-4 rounded-2xl shadow-lg flex items-center gap-4 min-w-[300px] transform transition-all duration-300 translate-y-10 opacity-0`;
+        toast.innerHTML = `
+          <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid ${icon} text-sm"></i>
+          </div>
+          <span class="text-base font-bold">${message}</span>
+        `;
+
+        container.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-10', 'opacity-0');
+        });
+
+        setTimeout(() => {
+          toast.classList.add('opacity-0', '-translate-x-full');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      function formatNumber(value) {
+        if (value === null || value === undefined || Number.isNaN(value)) return '--';
+        return Number(value).toLocaleString('en-US', { maximumFractionDigits: 1 });
+      }
+
+      function formatTimestamp(ts) {
+        if (!ts) return '--';
+        return new Date(ts).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+
+      // === Mode Switching ===
+      function switchToAutoMode() {
+        document.getElementById('auto-mode-section').classList.remove('hidden');
+        document.getElementById('manual-mode-section').classList.add('hidden');
+        
+        document.getElementById('btn-auto-mode').classList.remove('border-slate-300', 'bg-white');
+        document.getElementById('btn-auto-mode').classList.add('border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-green-50');
+        
+        document.getElementById('btn-manual-mode').classList.remove('border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-green-50');
+        document.getElementById('btn-manual-mode').classList.add('border-slate-300', 'bg-white');
+        
+        currentMode = 'auto';
+        document.getElementById('current-mode').textContent = 'آلي';
+      }
+
+      function switchToManualMode() {
+        document.getElementById('auto-mode-section').classList.add('hidden');
+        document.getElementById('manual-mode-section').classList.remove('hidden');
+        
+        document.getElementById('btn-manual-mode').classList.remove('border-slate-300', 'bg-white');
+        document.getElementById('btn-manual-mode').classList.add('border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-green-50');
+        
+        document.getElementById('btn-auto-mode').classList.remove('border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-green-50');
+        document.getElementById('btn-auto-mode').classList.add('border-slate-300', 'bg-white');
+        
+        currentMode = 'manual';
+        document.getElementById('current-mode').textContent = 'يدوي';
+        
+        renderManualDevices();
+      }
+      
+      function switchToManualModeAndDisable() {
+        // هذه الدالة تُستخدم فقط عند الضغط على زر الوضع اليدوي
+        disableAutoMode().then(() => {
+          switchToManualMode();
+        });
+      }
+
+      async function disableAutoMode() {
+        try {
+          await fetch('/api/climate/setpoint', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled: false })
+          });
+        } catch (e) {
+          console.error('Error disabling auto mode:', e);
+        }
+      }
+
+      // === Auto Mode Functions ===
+      document.getElementById('save-auto-settings').addEventListener('click', async () => {
+        const payload = {
+          enabled: true,
+          targetTemperature: parseFloat(document.getElementById('target-temp-input').value),
+          targetHumidity: parseFloat(document.getElementById('target-hum-input').value),
+          temperatureTolerance: parseFloat(document.getElementById('temp-tolerance').value),
+          humidityTolerance: parseFloat(document.getElementById('hum-tolerance').value),
+        };
+
+        try {
+          const res = await fetch('/api/climate/setpoint', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          if (res.ok) {
+            showToast('تم تفعيل الوضع الآلي بنجاح');
+            fetchStatus();
+          } else {
+            const data = await res.json();
+            showToast(data.error || 'فشل تفعيل الوضع الآلي', 'error');
+          }
+        } catch (e) {
+          showToast('خطأ في الاتصال', 'error');
+        }
+      });
+
+      // Sync sliders with inputs
+      document.getElementById('target-temp-slider').addEventListener('input', (e) => {
+        document.getElementById('target-temp-input').value = e.target.value;
+      });
+      document.getElementById('target-temp-input').addEventListener('input', (e) => {
+        document.getElementById('target-temp-slider').value = e.target.value;
+      });
+      document.getElementById('target-hum-slider').addEventListener('input', (e) => {
+        document.getElementById('target-hum-input').value = e.target.value;
+      });
+      document.getElementById('target-hum-input').addEventListener('input', (e) => {
+        document.getElementById('target-hum-slider').value = e.target.value;
+      });
+
+      // === Setpoint Editing State Handlers ===
+      function startEditingSetpoint() {
+        isEditingSetpoint = true;
+        if (stopEditingTimeout) {
+          clearTimeout(stopEditingTimeout);
+          stopEditingTimeout = null;
+        }
+      }
+
+      function stopEditingSetpointDelayed() {
+        if (stopEditingTimeout) {
+          clearTimeout(stopEditingTimeout);
+        }
+        // ننتظر قليلاً بعد انتهاء التعديل قبل السماح للتحديث التلقائي بالكتابة فوق القيم
+        stopEditingTimeout = setTimeout(() => {
+          isEditingSetpoint = false;
+        }, 2000);
+      }
+
+      function attachSetpointEditingHandlers() {
+        const ids = [
+          'target-temp-slider',
+          'target-temp-input',
+          'target-hum-slider',
+          'target-hum-input',
+          'temp-tolerance',
+          'hum-tolerance',
+        ];
+
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+
+          // عند بدء التعديل
+          el.addEventListener('mousedown', startEditingSetpoint);
+          el.addEventListener('touchstart', startEditingSetpoint);
+          el.addEventListener('focus', startEditingSetpoint);
+
+          // عند انتهاء التعديل أو تغيير القيمة
+          el.addEventListener('mouseup', stopEditingSetpointDelayed);
+          el.addEventListener('touchend', stopEditingSetpointDelayed);
+          el.addEventListener('blur', stopEditingSetpointDelayed);
+          el.addEventListener('change', stopEditingSetpointDelayed);
+        });
+      }
+
+      // ربط معالجات التعديل بالقيم المستهدفة
+      attachSetpointEditingHandlers();
+
+      function updateDoorUI() {
+        const door = relaysData['door'];
+        if (!door) return;
+        const isOpen = door.state;
+
+        const wrap = document.getElementById('door-icon-wrap');
+        const text = document.getElementById('door-status-text');
+        const openBtn = document.getElementById('door-open-btn');
+        const closeBtn = document.getElementById('door-close-btn');
+
+        if (isOpen) {
+          wrap.className = 'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg transition-all bg-teal-500 text-white';
+          wrap.innerHTML = '<i class="fa-solid fa-door-open"></i>';
+          text.textContent = 'مفتوح';
+          text.className = 'text-sm font-bold text-teal-600';
+          openBtn.classList.add('ring-2', 'ring-teal-400', 'ring-offset-1');
+          closeBtn.classList.remove('ring-2', 'ring-slate-400', 'ring-offset-1');
+        } else {
+          wrap.className = 'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg transition-all bg-slate-200 text-slate-500';
+          wrap.innerHTML = '<i class="fa-solid fa-door-closed"></i>';
+          text.textContent = 'مغلق';
+          text.className = 'text-sm font-bold text-slate-500';
+          openBtn.classList.remove('ring-2', 'ring-teal-400', 'ring-offset-1');
+          closeBtn.classList.add('ring-2', 'ring-slate-400', 'ring-offset-1');
+        }
+      }
+
+      function renderAutoDevicesStatus() {
+        const container = document.getElementById('auto-devices-status');
+        container.innerHTML = '';
+
+        Object.entries(relaysData).forEach(([relayId, relay]) => {
+          if (relayId === 'door') return; // الباب له قسمه الخاص
+          const icon = RELAY_ICONS[relayId] || '<i class="fa-solid fa-plug"></i>';
+          const name = RELAY_NAMES_AR[relayId] || relayId;
+          const color = RELAY_COLORS[relayId] || 'slate';
+          const isOn = relay.state;
+          const statusText = isOn ? 'نشط' : 'متوقف';
+
+          const div = document.createElement('div');
+          div.className = `p-4 bg-white rounded-xl border-2 ${isOn ? `border-${color}-500` : 'border-slate-200'} transition-all`;
+          div.innerHTML = `
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-12 h-12 rounded-xl bg-${color}-100 flex items-center justify-center text-${color}-600 text-xl">
+                ${icon}
+              </div>
+              <span class="text-sm font-bold text-slate-700">${name}</span>
+              <span class="text-xs font-bold px-3 py-1 rounded-lg ${isOn ? `bg-${color}-100 text-${color}-700` : 'bg-slate-100 text-slate-500'}">
+                ${statusText}
+              </span>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      // === Manual Mode Functions ===
+      function renderManualDevices() {
+        const container = document.getElementById('manual-devices-grid');
+        container.innerHTML = '';
+
+        Object.entries(relaysData).forEach(([relayId, relay]) => {
+          if (relayId === 'door') return; // الباب له قسمه الخاص
+          const icon = RELAY_ICONS[relayId] || '<i class="fa-solid fa-plug"></i>';
+          const name = RELAY_NAMES_AR[relayId] || relayId;
+          const color = RELAY_COLORS[relayId] || 'slate';
+          const isOn = relay.state;
+          const isAuto = relay.mode === 'auto';
+          const statusText = isOn ? 'نشط' : 'متوقف';
+          const onBtnText = '<i class="fa-solid fa-power-off ml-1"></i> تشغيل';
+          const offBtnText = '<i class="fa-solid fa-power-off ml-1"></i> إيقاف';
+
+          const div = document.createElement('div');
+          div.className = 'p-6 bg-white rounded-2xl border-2 border-slate-200 shadow-sm';
+          div.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-${color}-100 flex items-center justify-center text-${color}-600 text-xl">
+                  ${icon}
+                </div>
+                <div>
+                  <h3 class="font-bold text-slate-900">${name}</h3>
+                  <span class="text-xs font-bold px-2 py-1 rounded-lg ${isOn ? `bg-${color}-100 text-${color}-700` : 'bg-slate-100 text-slate-500'}">
+                    ${statusText}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-slate-600">الوضع:</span>
+                <button onclick="toggleRelayMode('${relayId}')" data-relay-control class="px-3 py-1.5 text-xs font-bold rounded-lg ${isAuto ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'} hover:opacity-80 transition-opacity">
+                  ${isAuto ? 'آلي' : 'يدوي'}
+                </button>
+              </div>
+
+              <div class="flex gap-2">
+                <button onclick="setRelayState('${relayId}', true)" data-relay-control class="flex-1 px-4 py-2.5 text-sm font-bold rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-sm">
+                  ${onBtnText}
+                </button>
+                <button onclick="setRelayState('${relayId}', false)" data-relay-control class="flex-1 px-4 py-2.5 text-sm font-bold rounded-xl bg-rose-500 hover:bg-rose-600 text-white transition-colors shadow-sm">
+                  ${offBtnText}
+                </button>
+              </div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      async function toggleRelayMode(relayId) {
+        const relay = relaysData[relayId];
+        if (!relay) return;
+
+        const newMode = relay.mode === 'auto' ? 'manual' : 'auto';
+
+        try {
+          await fetch(`/api/relays/${relayId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: newMode })
+          });
+          showToast(`تم تغيير ${RELAY_NAMES_AR[relayId]} إلى الوضع ${newMode === 'auto' ? 'الآلي' : 'اليدوي'}`);
+          // Updates arrive via Socket.IO instantly
+        } catch (e) {
+          showToast('خطأ في الاتصال', 'error');
+        }
+      }
+
+      // Per-relay debounce + in-flight lock:
+      // النقر السريع على on/off (5+ نقرات/ثانية) كان يولّد عاصفة من POSTs
+      // يُغرق ESP32 برسائل full_state ويتسبب في تعليق الواجهة الفعلي.
+      // الحل: نسجّل آخر رغبة، ثم نُرسلها مرة واحدة بعد فترة قصيرة، ولا نسمح
+      // بأكثر من طلب واحد قيد التنفيذ لكل relay.
+      const RELAY_DEBOUNCE_MS = 250;
+      const _relayDebounceTimers = {};
+      const _relayPendingDesired = {};
+      const _relayInFlight = {};
+
+      async function _flushRelayState(relayId) {
+        if (_relayInFlight[relayId]) return;
+        const pending = _relayPendingDesired[relayId];
+        if (!pending) return;
+        delete _relayPendingDesired[relayId];
+
+        _relayInFlight[relayId] = true;
+        try {
+          const res = await fetch(`/api/relays/${relayId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: 'manual', state: pending.state })
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || 'فشل الأمر', 'error');
+          } else {
+            const actionText = pending.state ? 'تشغيل' : 'إيقاف';
+            showToast(`تم ${actionText} ${RELAY_NAMES_AR[relayId]}`);
+          }
+        } catch (e) {
+          showToast('خطأ في الاتصال', 'error');
+        } finally {
+          _relayInFlight[relayId] = false;
+          // إذا تراكمت رغبة جديدة أثناء الإرسال، أرسلها الآن
+          if (_relayPendingDesired[relayId]) {
+            _flushRelayState(relayId);
+          }
+        }
+      }
+
+      function setRelayState(relayId, state) {
+        if (_physicalManualMode) {
+          alert('الوحدة في وضع التحكم اليدوي المحلي. أطفئ جميع المفاتيح الفيزيائية للعودة للتحكم عن بعد.');
+          return;
+        }
+        _relayPendingDesired[relayId] = { state: !!state };
+        if (_relayDebounceTimers[relayId]) clearTimeout(_relayDebounceTimers[relayId]);
+        _relayDebounceTimers[relayId] = setTimeout(() => {
+          delete _relayDebounceTimers[relayId];
+          _flushRelayState(relayId);
+        }, RELAY_DEBOUNCE_MS);
+      }
+
+      // === Fetch Status ===
+      function updateUIWithPayload(payload) {
+        // Update sensor data
+        sensorData = payload.sensorData || payload.sensor || {};
+        document.getElementById('temperature').textContent = formatNumber(sensorData.temperature);
+        document.getElementById('humidity').textContent = formatNumber(sensorData.humidity);
+        document.getElementById('sensor-updated').textContent = formatTimestamp(sensorData.updatedAt);
+        
+        // Update manual mode / physical switches
+        const manualMode = payload.manualMode || (payload.sensorData && payload.sensorData.manualMode) || false;
+        const switches = payload.switches || (payload.sensorData && payload.sensorData.switches) || {};
+        _physicalManualMode = manualMode;
+        const manualBadge = document.getElementById('manual-badge');
+        const switchesDisplay = document.getElementById('switches-display');
+        
+        if (manualMode) {
+          manualBadge.classList.remove('hidden');
+          switchesDisplay.classList.remove('hidden');
+          const relayLabels = { fan: 'مروحة', heater: 'مسخن', pump: 'مضخة رطوبة', motor: 'باب', door: 'باب تبريد' };
+          const activeSwitches = Object.entries(switches).filter(([,v]) => v === true).map(([k]) => relayLabels[k] || k);
+          if (activeSwitches.length > 0) {
+            switchesDisplay.innerHTML = activeSwitches.map(s => 
+              '<span class="bg-amber-200 text-amber-800 text-xs font-bold px-2 py-1 rounded-lg">' + s + '</span>'
+            ).join('');
+          } else {
+            switchesDisplay.innerHTML = '';
+          }
+          document.querySelectorAll('[data-relay-control]').forEach(el => {
+            el.disabled = true;
+            el.classList.add('opacity-50', 'cursor-not-allowed');
+          });
+        } else {
+          manualBadge.classList.add('hidden');
+          switchesDisplay.classList.add('hidden');
+          switchesDisplay.innerHTML = '';
+          document.querySelectorAll('[data-relay-control]').forEach(el => {
+            el.disabled = false;
+            el.classList.remove('opacity-50', 'cursor-not-allowed');
+          });
+        }
+        
+        // Update relays data
+        relaysData = payload.relayState || payload.relays || {};
+        
+        // Update setpoint values (from Socket.IO naming or REST naming)
+        const spConfig = payload.setpointConfig || payload.setpoint;
+        if (spConfig && !isEditingSetpoint) {
+          document.getElementById('target-temp-slider').value = spConfig.targetTemperature;
+          document.getElementById('target-temp-input').value = spConfig.targetTemperature;
+          document.getElementById('target-hum-slider').value = spConfig.targetHumidity;
+          document.getElementById('target-hum-input').value = spConfig.targetHumidity;
+          document.getElementById('temp-tolerance').value = spConfig.temperatureTolerance;
+          document.getElementById('hum-tolerance').value = spConfig.humidityTolerance;
+
+          // Auto-switch to auto mode if enabled
+          if (spConfig.enabled && currentMode !== 'auto') {
+            switchToAutoMode();
+          } else if (!spConfig.enabled && currentMode !== 'manual') {
+            switchToManualMode();
+          }
+        }
+        
+        // Update door control section
+        updateDoorUI();
+
+        // Render based on current mode
+        if (currentMode === 'auto') {
+          renderAutoDevicesStatus();
+        } else if (currentMode === 'manual') {
+          renderManualDevices();
+        }
+      }
+
+      async function fetchStatus() {
+        try {
+          const response = await fetch('/api/status');
+          if (!response.ok) throw new Error('Server Error');
+          const payload = await response.json();
+          updateUIWithPayload(payload);
+        } catch (error) {
+          console.error('Status fetch error:', error);
+        }
+      }
+
+      // === Authentication ===
+      (function() {
+        const token = localStorage.getItem('eco_token');
+        const user = JSON.parse(localStorage.getItem('eco_user') || '{}');
+        
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const adminLink = document.getElementById('adminLink');
+
+        if (logoutBtn) {
+          logoutBtn.classList.remove('hidden');
+          logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('eco_token');
+            localStorage.removeItem('eco_user');
+            window.location.href = '/login.html';
+          });
+        }
+        
+        if (user.role === 'admin' && adminLink) {
+          adminLink.classList.remove('hidden');
+        }
+      })();
+
+      
+
+      // === Initialize ===
+      // جلب الحالة أولاً لتحديد الوضع الحالي
+      fetchStatus().then(() => {
+        // إذا لم يكن الوضع الآلي مُفعّلاً، نبدأ في الوضع اليدوي
+        if (currentMode !== 'auto') {
+          switchToManualMode();
+        }
+      });
+      
+      // Setup Socket.IO for Real-time Updates Instead of HTTP Polling
+      const socket = io();
+      socket.on('state_update', (payload) => {
+        updateUIWithPayload(payload);
+      });
+
+    </script>
+
+  </body>
+</html>
